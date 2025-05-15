@@ -1,9 +1,7 @@
 import 'package:dash_todo_app/core/errors/exceptions.dart';
 import 'package:dash_todo_app/core/errors/failure.dart';
-import 'package:dash_todo_app/core/utils/error_page.dart';
 import 'package:dash_todo_app/features/login_view/domain/usecases/create_user_use_case.dart';
 import 'package:dash_todo_app/features/login_view/domain/usecases/sign_in_email_password_use_case.dart';
-import 'package:dash_todo_app/injection_container.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
