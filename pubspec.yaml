@@ -8,9 +8,11 @@ environment:
 
 dependencies:
   animate_do: ^4.2.0
+  animated_text_kit: ^4.2.3
   bloc: ^9.0.0
   cloud_firestore: ^5.6.7
   dartz: ^0.10.1
+  equatable: ^2.0.7
   firebase_auth: ^5.5.3
   firebase_core: ^3.13.0
   firebase_storage: ^12.4.5
@@ -25,6 +27,7 @@ dependencies:
   google_fonts: ^6.2.1
   google_sign_in: ^6.3.0
   intl: any
+  lottie: ^3.3.1
   responsive_framework: ^1.5.1
   shared_preferences: ^2.5.3
 

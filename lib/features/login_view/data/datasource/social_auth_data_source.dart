@@ -38,43 +38,18 @@ class SocialAuthDataSourceImpl implements SocialAuthDataSource {
       );
 
       final user = userCredential.user;
-      if (user == null) throw InvalidCredentialException();
-      await _getUserFromDBAndSaveSession(id: user.uid);
+
       return user;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'account-exists-with-different-credential') {
         throw AccountExistsWithDifferentCredentialException();
       } else if (e.code == 'invalid-credential') {
         throw InvalidCredentialException();
+      } else {
+        throw LoginWithEmailException();
       }
     } catch (e) {
       throw LoginWithEmailException();
-    }
-    return null;
-  }
-
-  Future<void> _getUserFromDBAndSaveSession({required String id}) async {
-    final userData = await _getUserFromDB(id: id);
-    await _saveUserDataSharedPreferences(userData: userData);
-  }
-
-  Future<void> _saveUserDataSharedPreferences({
-    required UserData userData,
-  }) async {
-    await sharedPreferences.setString('id', userData.uuid);
-    await sharedPreferences.setString('email', userData.email);
-    await sharedPreferences.setString('username', userData.username);
-  }
-
-  Future<UserData> _getUserFromDB({required String id}) async {
-    try {
-      final result = await db.collection('users').doc(id).get();
-      if (result.data() == null) {
-        throw DataBaseException(message: 'ddd');
-      }
-      return UserData.fromJson(result.data()!);
-    } catch (e) {
-      throw DataBaseException(message: e.toString());
     }
   }
 
@@ -101,7 +76,9 @@ class SocialAuthDataSourceImpl implements SocialAuthDataSource {
       } else if (e.code == 'email-already-in-use') {
         throw EmailAlreadyInUseException(message: e.message ?? '');
       } else if (e.code == 'invalid-email') {
-        throw InvalidCredentialException();
+        throw InvalidEmialException(
+          message: e.message ?? '',
+        );
       } else {
         throw LoginWithEmailException();
       }

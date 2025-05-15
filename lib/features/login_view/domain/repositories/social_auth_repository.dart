@@ -11,4 +11,9 @@ abstract class SocialAuthRepository {
   Future<Either<Failure, bool>> resetUserPassword({
     required String email,
   });
+
+  Future<Either<Failure, User?>> createUserWithEmailAndPassword({
+    required String email,
+    required String password,
+  });
 }

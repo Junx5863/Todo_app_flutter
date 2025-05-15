@@ -31,3 +31,9 @@ class EmailAlreadyInUseException implements Exception {
 
   final String message;
 }
+
+class InvalidEmialException implements Exception {
+  InvalidEmialException({required this.message});
+
+  final String message;
+}

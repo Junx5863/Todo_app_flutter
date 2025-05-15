@@ -27,8 +27,10 @@ class SocialAuthRepositoryImpl implements SocialAuthRepository {
   }
 
   @override
-  Future<Either<Failure, User?>> signInWithEmailAndPassword(
-      {required String email, required String password}) async {
+  Future<Either<Failure, User?>> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
     try {
       final result = await socialAuthDataSource.signInWithEmailAndPassword(
         email: email,
@@ -50,6 +52,38 @@ class SocialAuthRepositoryImpl implements SocialAuthRepository {
     } on LoginWithEmailException catch (e) {
       return Left(
         LoginWithEmailFailure(
+          message: e.toString(),
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, User?>> createUserWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final result = await socialAuthDataSource.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return Right(result);
+    } on WeekPasswordException catch (e) {
+      return Left(
+        WeekPasswordFailure(
+          message: e.toString(),
+        ),
+      );
+    } on EmailAlreadyInUseException catch (e) {
+      return Left(
+        EmailAlreadyInUseFailure(
+          message: e.toString(),
+        ),
+      );
+    } on InvalidEmialException catch (e) {
+      return Left(
+        InvalidEmailFailure(
           message: e.toString(),
         ),
       );
