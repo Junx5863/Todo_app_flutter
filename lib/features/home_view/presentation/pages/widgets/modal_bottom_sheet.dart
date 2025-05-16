@@ -1,6 +1,7 @@
 import 'package:dash_todo_app/core/styles/app_them.dart';
 import 'package:dash_todo_app/features/home_view/presentation/bloc/home_dash_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
@@ -23,120 +24,126 @@ Future<dynamic> modalBottomSheetCard({
     ),
     isScrollControlled: true,
     builder: (context) {
-      return DraggableScrollableSheet(
-          initialChildSize: 0.7,
-          minChildSize: 0.5,
-          maxChildSize: 0.85,
-          expand: false,
-          builder: (context, scrollController) {
-            return SingleChildScrollView(
-              controller: scrollController,
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Wrap(
-                  children: [
-                    Center(
-                      child: Container(
-                        height: 4,
-                        width: 40,
-                        color: Colors.grey[300],
-                        margin: const EdgeInsets.only(bottom: 16),
+      return KeyboardDismissOnTap(
+        dismissOnCapturedTaps: true,
+        child: DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.5,
+            maxChildSize: 0.85,
+            expand: false,
+            builder: (context, scrollController) {
+              return SingleChildScrollView(
+                controller: scrollController,
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Wrap(
+                    children: [
+                      Center(
+                        child: Container(
+                          height: 4,
+                          width: 40,
+                          color: Colors.grey[300],
+                          margin: const EdgeInsets.only(bottom: 16),
+                        ),
                       ),
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.background,
+                      Row(
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.background,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.black12,
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              onPressed: () => context.pop(),
+                              icon: Icon(Icons.close, color: AppColors.grey600),
+                            ),
+                          )
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                        ),
+                        child: TextField(
+                          controller: state.titleController,
+                          decoration: InputDecoration(
+                            labelText: 'Task Name',
+                            labelStyle: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade300),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade500),
+                            ),
                           ),
                         ),
-                        const Spacer(),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.black12,
-                                blurRadius: 10,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
-                            onPressed: () => context.pop(),
-                            icon: Icon(Icons.close, color: AppColors.grey600),
-                          ),
-                        )
+                      ),
+                      if (!title.contains('Add Task')) ...[
+                        IsDoneCheckBox(
+                          bloc: cubit,
+                          isChecked: isChecked ?? false,
+                        ),
                       ],
-                    ),
-                    const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 16,
+                      DaySelectTask(
+                        cubit: cubit,
+                        dateTime: dateTime,
+                        dueTo: dueTo,
                       ),
-                      child: TextField(
-                        controller: state.titleController,
-                        decoration: InputDecoration(
-                          labelText: 'Task Name',
-                          labelStyle: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
+                      CategorySelector(
+                        cubit: cubit,
+                        state: state,
+                        category: category,
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(top: 16),
+                        width: double.infinity,
+                        height: MediaQuery.of(context).size.height * 0.05,
+                        child: ElevatedButton(
+                          onPressed: onSelected,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey.shade500),
-                          ),
+                          child: Text('Save',
+                              style: TextStyle(
+                                color: AppColors.buttonText,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              )),
                         ),
-                      ),
-                    ),
-                    if (!title.contains('Add Task')) ...[
-                      IsDoneCheckBox(
-                        bloc: cubit,
-                        isChecked: isChecked ?? false,
                       ),
                     ],
-                    DaySelectTask(
-                      cubit: cubit,
-                      dateTime: dateTime,
-                      dueTo: dueTo,
-                    ),
-                    CategorySelector(
-                      cubit: cubit,
-                      category: category,
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(top: 16),
-                      width: double.infinity,
-                      height: MediaQuery.of(context).size.height * 0.05,
-                      child: ElevatedButton(
-                        onPressed: onSelected,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 32, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text('Save',
-                            style: TextStyle(
-                              color: AppColors.buttonText,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            )),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            );
-          });
+              );
+            }),
+      );
     },
   );
 }
@@ -418,29 +425,23 @@ class CategorySelector extends StatefulWidget {
   const CategorySelector({
     super.key,
     required this.cubit,
+    required this.state,
     this.category,
   });
   final HomeDashCubit cubit;
+  final HomeDashState state;
   final String? category;
   @override
   State<CategorySelector> createState() => _CategorySelectorState();
 }
 
 class _CategorySelectorState extends State<CategorySelector> {
-  final List<String> categories = [
-    'Design',
-    'Study',
-    'Development',
-    'Art',
-    'Music',
-    'Games'
-  ];
   late ValueNotifier<String> selectedCategory;
 
   @override
   void initState() {
     super.initState();
-    selectedCategory = ValueNotifier(widget.category ?? 'Design');
+    selectedCategory = ValueNotifier(widget.category ?? '');
   }
 
   @override
@@ -472,17 +473,21 @@ class _CategorySelectorState extends State<CategorySelector> {
                   height: MediaQuery.of(context).size.height * 0.05,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    itemCount: categories.length,
+                    itemCount: widget.state.categories.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
                     itemBuilder: (context, index) {
-                      bool isSelected =
-                          selectedCategory.value == categories[index];
+                      bool isSelected = selectedCategory.value ==
+                          widget.state.categories[index].name;
 
                       return GestureDetector(
                         onTap: () {
-                          selectedCategory.value = categories[index];
+                          selectedCategory.value =
+                              widget.state.categories[index].name!;
+
                           widget.cubit.categoryTask(
-                            category: categories[index],
+                            category: widget.state.categories[index].name!,
+                            categoryId:
+                                widget.state.categories[index].idcategory!,
                           );
                         },
                         child: AnimatedContainer(
@@ -503,7 +508,7 @@ class _CategorySelectorState extends State<CategorySelector> {
                           ),
                           child: Center(
                             child: Text(
-                              categories[index],
+                              widget.state.categories[index].name!,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,

@@ -14,6 +14,8 @@ class CreateTaskUseCase extends BaseUseCase<dynamic, CreateTaskUseParams> {
       title: params.title,
       dueDate: params.dueDate,
       category: params.category,
+      isDone: params.isDone,
+      categoryId: params.categoryId,
     );
   }
 }
@@ -23,9 +25,13 @@ class CreateTaskUseParams {
     required this.title,
     required this.dueDate,
     required this.category,
+    required this.isDone,
+    required this.categoryId,
   });
 
   final String title;
   final String dueDate;
   final String category;
+  final bool isDone;
+  final String categoryId;
 }

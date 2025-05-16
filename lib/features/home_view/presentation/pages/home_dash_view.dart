@@ -32,28 +32,20 @@ class HomeDashView extends BasePage<HomeDashState, HomeDashCubit> {
                 );
               }
             },
-            child: state.tasks.isEmpty
-                ? const Center(
-                    child: Text(
-                      "No tasks available",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.white,
-                      ),
-                    ),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      HeaderWidget(),
-                      CategoryWidget(),
-                      ListTaskWidget(
-                        bloc: bloc,
-                        state: state,
-                      ),
-                    ],
-                  )),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                HeaderWidget(),
+                CategoryWidget(
+                  bloc: bloc,
+                  state: state,
+                ),
+                ListTaskWidget(
+                  bloc: bloc,
+                  state: state,
+                ),
+              ],
+            )),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -140,47 +132,37 @@ class HeaderWidget extends StatelessWidget {
 }
 
 class CategoryWidget extends StatelessWidget {
-  const CategoryWidget({super.key});
+  const CategoryWidget({
+    super.key,
+    required this.bloc,
+    required this.state,
+  });
+  final HomeDashState state;
+  final HomeDashCubit bloc;
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 16),
-              child: Text(
-                "Categories",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.white,
-                ),
-              ),
+        Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Text(
+            "Categories",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.white,
             ),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: IconButton(
-                onPressed: () {
-                  /* modalBottomSheetCard(
-                      context: context,
-                      title: "Add Category",
-                      onSelected: () {}); */
-                },
-                icon:
-                    Icon(Icons.add_circle, color: AppColors.primary, size: 28),
-              ),
-            ),
-          ],
+          ),
         ),
+        const SizedBox(height: 16),
         Container(
           height: MediaQuery.of(context).size.height * 0.15,
           margin: const EdgeInsets.only(left: 16, right: 16),
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: 10,
+            itemCount: state.categories.length,
             itemBuilder: (context, index) {
               return Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -205,7 +187,7 @@ class CategoryWidget extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "40 Taks",
+                            '${state.categoryCounts[state.categories[index].name] ?? 0} -  Task',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w200,
@@ -216,7 +198,7 @@ class CategoryWidget extends StatelessWidget {
                               height:
                                   MediaQuery.of(context).size.height * 0.010),
                           Text(
-                            "Business",
+                            state.categories[index].name!,
                             maxLines: 2,
                             style: TextStyle(
                               fontSize: 25,
@@ -227,7 +209,9 @@ class CategoryWidget extends StatelessWidget {
                         ],
                       ),
                       LinearProgressIndicator(
-                        value: 0.7,
+                        value: state.categoryProgress[
+                                state.categories[index].name] ??
+                            0.0,
                         backgroundColor: AppColors.grey200,
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(8),
@@ -255,6 +239,21 @@ class ListTaskWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (state.tasks.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
+        child: const Center(
+          child: Text(
+            "No tasks available",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.white,
+            ),
+          ),
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
       child: Column(

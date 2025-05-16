@@ -1,7 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:dash_todo_app/core/errors/failure.dart';
 import 'package:dash_todo_app/features/home_view/data/datasource/task_manager_data_source.dart';
-import 'package:dash_todo_app/features/home_view/data/model/task_info_model_dart';
+import 'package:dash_todo_app/features/home_view/data/model/categories_model.dart';
+import 'package:dash_todo_app/features/home_view/data/model/task_info_model.dart';
 import 'package:dash_todo_app/features/home_view/domain/repositories/task_manager_repository.dart';
 
 class TaskManagerRepositoryImpl extends TaskManagerRepository {
@@ -16,12 +17,16 @@ class TaskManagerRepositoryImpl extends TaskManagerRepository {
     required String title,
     required String dueDate,
     required String category,
+    required bool isDone,
+    required String categoryId,
   }) async {
     try {
       final result = await taskManagerDataSource.addTask(
         title: title,
         dueDate: dueDate,
         category: category,
+        isDone: isDone,
+        categoryId: categoryId,
       );
       return Right(result);
     } catch (e) {
@@ -86,6 +91,20 @@ class TaskManagerRepositoryImpl extends TaskManagerRepository {
     } catch (e) {
       return Left(
         UpdateTaskFailure(
+          message: e.toString(),
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<CategoryModel>>> getCategories() async {
+    try {
+      final result = await taskManagerDataSource.getCategoriesList();
+      return Right(result);
+    } catch (e) {
+      throw Left(
+        GetCategoriesFailure(
           message: e.toString(),
         ),
       );

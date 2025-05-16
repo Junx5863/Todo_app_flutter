@@ -1,9 +1,11 @@
 import 'package:bloc/bloc.dart';
 import 'package:dash_todo_app/core/base/base_usecase.dart';
 import 'package:dash_todo_app/core/errors/failure.dart';
-import 'package:dash_todo_app/features/home_view/data/model/task_info_model_dart';
+import 'package:dash_todo_app/features/home_view/data/model/categories_model.dart';
+import 'package:dash_todo_app/features/home_view/data/model/task_info_model.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/add_task_use_case.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/delete_task_use_case.dart';
+import 'package:dash_todo_app/features/home_view/domain/usecases/get_categories_use_case.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/get_task_use_case.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/update_task_use_case.dart';
 import 'package:flutter/material.dart';
@@ -17,36 +19,76 @@ class HomeDashCubit extends Cubit<HomeDashState> {
     required UpdateTaskUseCase updateTaskUseCase,
     required DeleteTaskUseCase deleteTaskUseCase,
     required CreateTaskUseCase addTaskUseCase,
+    required GetCategoriesUseCase getCategoriesUseCase,
   })  : _getTaskUseCase = getTaskUseCase,
         _updateTaskUseCase = updateTaskUseCase,
         _deleteTaskUseCase = deleteTaskUseCase,
         _addTaskUseCase = addTaskUseCase,
+        _getCategoriesUseCase = getCategoriesUseCase,
         super(HomeDashState.initial());
 
   final GetTaskUseCase _getTaskUseCase;
   final UpdateTaskUseCase _updateTaskUseCase;
   final DeleteTaskUseCase _deleteTaskUseCase;
   final CreateTaskUseCase _addTaskUseCase;
+  final GetCategoriesUseCase _getCategoriesUseCase;
 
   void init() async {
     emit(state.copyWith(status: HomeDashStatus.loading));
+    getCategories();
 
     _getTaskUseCase.callStream(NoParams()).listen(
       (result) {
-        result.fold(
-          (dynamic fail) {
-            emit(state.copyWith(
-              status: HomeDashStatus.error,
-              errorMessage: 'Failed to load tasks',
-            ));
-          },
-          (List<TaskInfoModel> r) {
-            emit(state.copyWith(
-              status: HomeDashStatus.initial,
-              tasks: r,
-            ));
-          },
-        );
+        result.fold((dynamic fail) {
+          emit(state.copyWith(
+            status: HomeDashStatus.error,
+            errorMessage: 'Failed to load tasks',
+          ));
+        }, (List<TaskInfoModel> tasks) {
+          final Map<String, int> categoryCounts = {};
+
+          for (final task in tasks) {
+            final category = task.category ?? 'Unknown';
+            categoryCounts[category] = (categoryCounts[category] ?? 0) + 1;
+          }
+
+          final totalTasks =
+              categoryCounts.values.fold<int>(0, (sum, count) => sum + count);
+
+          final Map<String, double> categoryProgress = {};
+          for (final entry in categoryCounts.entries) {
+            categoryProgress[entry.key] =
+                totalTasks > 0 ? entry.value / totalTasks : 0.0;
+          }
+
+          emit(state.copyWith(
+            status: HomeDashStatus.initial,
+            tasks: tasks,
+            categoryCounts: categoryCounts,
+            categoryProgress: categoryProgress, // ← nuevo campo
+          ));
+        });
+      },
+    );
+  }
+
+  void getCategories() async {
+    emit(state.copyWith(status: HomeDashStatus.loading));
+
+    final result = await _getCategoriesUseCase(NoParams());
+
+    result.fold(
+      (dynamic fail) {
+        emit(state.copyWith(
+          status: HomeDashStatus.error,
+          errorMessage: 'Failed to load categories',
+        ));
+      },
+      (List<CategoryModel> r) {
+        emit(state.copyWith(
+          status: HomeDashStatus.initial,
+          categories: r,
+        ));
       },
     );
   }
@@ -81,27 +123,33 @@ class HomeDashCubit extends Cubit<HomeDashState> {
 
   void categoryTask({
     String? category,
+    String? categoryId,
   }) {
     emit(state.copyWith(
       category: category,
+      categoryId: categoryId,
     ));
   }
 
   void createTask() async {
     emit(state.copyWith(status: HomeDashStatus.loading));
 
-    if (state.titleController.text.isEmpty) {
+    final validationError = _validateTaskData();
+    if (validationError != null) {
       emit(state.copyWith(
         status: HomeDashStatus.error,
-        errorMessage: 'Please enter a title',
+        errorMessage: validationError,
       ));
       return;
     }
+
     final result = await _addTaskUseCase(
       CreateTaskUseParams(
         title: state.titleController.text,
         dueDate: state.dateTime,
         category: state.category,
+        isDone: state.isDone,
+        categoryId: state.categoryId,
       ),
     );
 
@@ -239,6 +287,8 @@ class HomeDashCubit extends Cubit<HomeDashState> {
   String? _validateTaskData() {
     if (state.titleController.text.isEmpty) {
       return 'Please enter a title';
+    } else if (state.category.isEmpty || state.categoryId.isEmpty) {
+      return 'Please select a category';
     }
     return null; // No hay errores
   }

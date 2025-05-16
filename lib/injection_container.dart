@@ -4,6 +4,7 @@ import 'package:dash_todo_app/features/home_view/data/repositories/task_manager_
 import 'package:dash_todo_app/features/home_view/domain/repositories/task_manager_repository.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/add_task_use_case.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/delete_task_use_case.dart';
+import 'package:dash_todo_app/features/home_view/domain/usecases/get_categories_use_case.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/get_task_use_case.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/update_task_use_case.dart';
 import 'package:dash_todo_app/features/home_view/presentation/bloc/home_dash_bloc.dart';
@@ -99,12 +100,18 @@ Future<void> init() async {
         taskManagerRepository: sl(),
       ),
     )
+    ..registerFactory<GetCategoriesUseCase>(
+      () => GetCategoriesUseCase(
+        taskManagerRepository: sl(),
+      ),
+    )
     ..registerFactory<HomeDashCubit>(
       () => HomeDashCubit(
         deleteTaskUseCase: sl(),
         getTaskUseCase: sl(),
         updateTaskUseCase: sl(),
         addTaskUseCase: sl(),
+        getCategoriesUseCase: sl(),
       ),
     );
 

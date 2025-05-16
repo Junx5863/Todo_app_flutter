@@ -61,3 +61,9 @@ class GetTasksFailure extends Failure {
 
   final String message;
 }
+
+class GetCategoriesFailure extends Failure {
+  GetCategoriesFailure({required this.message});
+
+  final String message;
+}

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dash_todo_app/features/home_view/data/model/task_info_model_dart';
+import 'package:dash_todo_app/features/home_view/data/model/categories_model.dart';
+import 'package:dash_todo_app/features/home_view/data/model/task_info_model.dart';
 import 'package:dash_todo_app/injection_container.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -8,6 +9,8 @@ abstract class TaskManagerDataSource {
     required String title,
     required String dueDate,
     required String category,
+    required bool isDone,
+    required String categoryId,
   });
 
   Future<void> updateTask({
@@ -21,6 +24,7 @@ abstract class TaskManagerDataSource {
   Future<void> deleteTask({required String taskId});
 
   Stream<List<TaskInfoModel>> getTasksList();
+  Future<List<CategoryModel>> getCategoriesList();
 }
 
 class TaskManagerDataSourceImpl extends TaskManagerDataSource {
@@ -32,16 +36,19 @@ class TaskManagerDataSourceImpl extends TaskManagerDataSource {
     required String title,
     required String dueDate,
     required String category,
+    required bool isDone,
+    required String categoryId,
   }) async {
     try {
       final refDb = _db.collection('task').doc();
       final result = await refDb.set({
         'title': title,
         'dueDate': dueDate,
-        'category': category,
         'userId': _auth.currentUser?.uid,
-        'isDone': false,
+        'isDone': isDone,
         'idTask': refDb.id,
+        'category': category,
+        'categoryId': categoryId,
       });
       return result;
     } catch (e) {
@@ -105,6 +112,23 @@ class TaskManagerDataSourceImpl extends TaskManagerDataSource {
     } catch (e) {
       // Handle error
       throw Exception('Failed to update task: $e');
+    }
+  }
+
+  @override
+  Future<List<CategoryModel>> getCategoriesList() async {
+    try {
+      final snapshot = await _db.collection('categories').get();
+      final categories = snapshot.docs
+          .map((doc) => CategoryModel.fromJson(doc.data()))
+          .toList();
+      return categories;
+    } on FirebaseException catch (e) {
+      // Handle error
+      throw Exception('Failed to get categories: $e');
+    } catch (e) {
+      // Handle error
+      throw Exception('Failed to get categories: $e');
     }
   }
 }
