@@ -1,4 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dash_todo_app/features/home_view/data/datasource/task_manager_data_source.dart';
+import 'package:dash_todo_app/features/home_view/data/repositories/task_manager_repository_impl.dart';
+import 'package:dash_todo_app/features/home_view/domain/repositories/task_manager_repository.dart';
+import 'package:dash_todo_app/features/home_view/domain/usecases/add_task_use_case.dart';
+import 'package:dash_todo_app/features/home_view/domain/usecases/delete_task_use_case.dart';
+import 'package:dash_todo_app/features/home_view/domain/usecases/get_task_use_case.dart';
+import 'package:dash_todo_app/features/home_view/domain/usecases/update_task_use_case.dart';
 import 'package:dash_todo_app/features/home_view/presentation/bloc/home_dash_bloc.dart';
 import 'package:dash_todo_app/features/login_view/data/datasource/social_auth_data_source.dart';
 import 'package:dash_todo_app/features/login_view/data/repositories/social_auth_repository_impl.dart';
@@ -64,8 +71,41 @@ Future<void> init() async {
     /*----------------*/
 
     /*-- Home Dash Screen --*/
+    ..registerFactory<TaskManagerDataSource>(
+      () => TaskManagerDataSourceImpl(),
+    )
+    ..registerFactory<TaskManagerRepository>(
+      () => TaskManagerRepositoryImpl(
+        taskManagerDataSource: sl(),
+      ),
+    )
+    ..registerFactory<CreateTaskUseCase>(
+      () => CreateTaskUseCase(
+        taskManagerRepository: sl(),
+      ),
+    )
+    ..registerFactory<UpdateTaskUseCase>(
+      () => UpdateTaskUseCase(
+        taskManagerRepository: sl(),
+      ),
+    )
+    ..registerFactory<DeleteTaskUseCase>(
+      () => DeleteTaskUseCase(
+        taskManagerRepository: sl(),
+      ),
+    )
+    ..registerFactory<GetTaskUseCase>(
+      () => GetTaskUseCase(
+        taskManagerRepository: sl(),
+      ),
+    )
     ..registerFactory<HomeDashCubit>(
-      () => HomeDashCubit(),
+      () => HomeDashCubit(
+        deleteTaskUseCase: sl(),
+        getTaskUseCase: sl(),
+        updateTaskUseCase: sl(),
+        addTaskUseCase: sl(),
+      ),
     );
 
   final sharedPreferences = await SharedPreferences.getInstance();

@@ -1,7 +1,7 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:dash_todo_app/core/base/base_page.dart';
 import 'package:dash_todo_app/core/styles/app_them.dart';
-import 'package:dash_todo_app/core/utils/error_page.dart';
+import 'package:dash_todo_app/core/utils/modals/error_page.dart';
 import 'package:dash_todo_app/features/login_view/presentation/bloc/social_auth_bloc.dart';
 import 'package:dash_todo_app/injection_container.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +25,7 @@ class LoginPage extends BasePage<SocialAuthState, SocialAuthBloc> {
     return BlocListener<SocialAuthBloc, SocialAuthState>(
       listener: (context, state) {
         if (state.status == SocialAuthStatus.error) {
-          showErrorsmodal(
+          showErrorsModal(
             context: context,
             title: state.errorTitle,
             errorMessage: state.errorMessage,

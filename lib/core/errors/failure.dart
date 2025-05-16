@@ -35,3 +35,29 @@ class InvalidEmailFailure extends Failure {
 
   final String message;
 }
+
+/* TaskFailure */
+
+class AddTaskFailure extends Failure {
+  AddTaskFailure({required this.message});
+
+  final String message;
+}
+
+class UpdateTaskFailure extends Failure {
+  UpdateTaskFailure({required this.message});
+
+  final String message;
+}
+
+class DeleteTaskFailure extends Failure {
+  DeleteTaskFailure({required this.message});
+
+  final String message;
+}
+
+class GetTasksFailure extends Failure {
+  GetTasksFailure({required this.message});
+
+  final String message;
+}

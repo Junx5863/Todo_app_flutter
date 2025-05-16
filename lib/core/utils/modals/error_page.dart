@@ -4,7 +4,7 @@ import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 
-showErrorsmodal({
+showErrorsModal({
   required BuildContext context,
   required String title,
   required String errorMessage,
