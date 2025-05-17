@@ -3,7 +3,6 @@ import 'package:dash_todo_app/features/home_view/presentation/bloc/home_dash_blo
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 Future<dynamic> modalBottomSheetCard({
   required BuildContext context,
@@ -11,8 +10,6 @@ Future<dynamic> modalBottomSheetCard({
   required void Function() onSelected,
   required HomeDashCubit cubit,
   required HomeDashState state,
-  String? dueTo,
-  DateTime? dateTime,
   String? category,
   bool? isChecked,
 }) {
@@ -79,45 +76,45 @@ Future<dynamic> modalBottomSheetCard({
                       const SizedBox(height: 10),
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                          vertical: 16,
+                          vertical: 10,
                         ),
-                        child: TextField(
+                        child: textFielInfoTask(
+                          state: state,
+                          cubit: cubit,
                           controller: state.titleController,
-                          decoration: InputDecoration(
-                            labelText: 'Task Name',
-                            labelStyle: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 14,
-                            ),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade300),
-                            ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade500),
-                            ),
-                          ),
+                          labelText: 'Task Name',
+                          onChanged: (value) {
+                            cubit.setTextTask(
+                              titleTask: value,
+                            );
+                          },
                         ),
                       ),
-                      if (!title.contains('Add Task')) ...[
-                        IsDoneCheckBox(
-                          bloc: cubit,
-                          isChecked: isChecked ?? false,
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          top: 0,
                         ),
-                      ],
-                      DaySelectTask(
-                        cubit: cubit,
-                        dateTime: dateTime,
-                        dueTo: dueTo,
+                        child: textFielInfoTask(
+                          state: state,
+                          cubit: cubit,
+                          controller: state.descriptionController,
+                          labelText: 'Description Name',
+                          maxLines: 3,
+                          maxLength: 100,
+                          onChanged: (value) {
+                            cubit.setTextTask(
+                              descriptionTask: value,
+                            );
+                          },
+                        ),
                       ),
-                      CategorySelector(
+                      StatusSelector(
                         cubit: cubit,
                         state: state,
-                        category: category,
+                        statusTask: category,
                       ),
                       Container(
-                        margin: const EdgeInsets.only(top: 16),
+                        margin: const EdgeInsets.only(top: 20),
                         width: double.infinity,
                         height: MediaQuery.of(context).size.height * 0.05,
                         child: ElevatedButton(
@@ -148,306 +145,75 @@ Future<dynamic> modalBottomSheetCard({
   );
 }
 
-class IsDoneCheckBox extends StatelessWidget {
-  final bool isChecked;
-  final HomeDashCubit bloc;
-  IsDoneCheckBox({
-    super.key,
-    required this.bloc,
-    this.isChecked = false,
-  }) : valueIsDone = ValueNotifier(isChecked);
-
-  final ValueNotifier<bool> valueIsDone;
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
-        valueListenable: valueIsDone,
-        builder: (BuildContext context, bool isChecked, Widget? child) {
-          return Container(
-            margin: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.black12,
-                  blurRadius: 10,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-            ),
-            child: CheckboxListTile(
-              title: Text(
-                'Task Completed',
-                style: TextStyle(
-                  color: AppColors.grey600,
-                  fontSize: 14,
-                ),
-              ),
-              value: isChecked,
-              onChanged: (value) {
-                valueIsDone.value = value!;
-                bloc.setCheckIsDone(isDone: value);
-              },
-              controlAffinity: ListTileControlAffinity.leading,
-              activeColor: AppColors.primary,
-              checkColor: AppColors.white,
-            ),
-          );
-        });
-  }
-}
-
-class DaySelectTask extends StatelessWidget {
-  DaySelectTask({
-    super.key,
-    required this.cubit,
-    this.dueTo,
-    this.dateTime,
-  }) : indexCustom = ValueNotifier(dueTo ?? 'Today');
-
-  final String? dueTo;
-  final DateTime? dateTime;
-  final List<String> options = ['Today', 'Tomorrow', 'Custom'];
-  final ValueNotifier<String> indexCustom;
-  final HomeDashCubit cubit;
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<String>(
-        valueListenable: indexCustom,
-        builder: (BuildContext context, String selectedOption, Widget? child) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Due To',
-                style: TextStyle(
-                  color: AppColors.grey600,
-                  fontSize: 12,
-                ),
-              ),
-              SizedBox(height: 8),
-              Row(
-                children: List.generate(
-                  options.length,
-                  (index) {
-                    return GestureDetector(
-                      onTap: () {
-                        indexCustom.value = options[index];
-                        cubit.dateTask(dueTo: indexCustom.value);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        margin: const EdgeInsets.only(right: 8),
-                        decoration: BoxDecoration(
-                          color: indexCustom.value == options[index]
-                              ? AppColors.primary
-                              : AppColors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.black12,
-                              blurRadius: 10,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          options[index],
-                          style: TextStyle(
-                            color: indexCustom.value == options[index]
-                                ? AppColors.white
-                                : AppColors.grey600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              if (indexCustom.value == 'Custom') ...[
-                // Show custom date picker if "Custom" is selected
-                const SizedBox(height: 16),
-                Text(
-                  'Select a date',
-                  style: TextStyle(
-                    color: AppColors.grey600,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ScrollableWeekDaySelector(
-                  weekLimit: 4,
-                  cubit: cubit,
-                  dateTime: dateTime ?? DateTime.now(),
-                )
-              ],
-            ],
-          );
-        });
-  }
-}
-
-class ScrollableWeekDaySelector extends StatefulWidget {
-  final int weekLimit;
-  final HomeDashCubit cubit;
-  final DateTime? dateTime;
-
-  const ScrollableWeekDaySelector({
-    super.key,
-    this.weekLimit = 4,
-    this.dateTime,
-    required this.cubit,
-  });
-
-  @override
-  State<ScrollableWeekDaySelector> createState() =>
-      _ScrollableWeekDaySelectorState();
-}
-
-class _ScrollableWeekDaySelectorState extends State<ScrollableWeekDaySelector> {
-  DateTime today = DateTime.now();
-  late List<DateTime> allDates;
-  late ValueNotifier<DateTime> selectedDate;
-
-  @override
-  void initState() {
-    super.initState();
-    _generateDates();
-    selectedDate = ValueNotifier(widget.dateTime ?? today);
-  }
-
-  @override
-  void dispose() {
-    selectedDate.dispose();
-    super.dispose();
-  }
-
-  void _generateDates() {
-    DateTime startOfWeek = today.subtract(Duration(days: today.weekday % 7));
-    int totalDays = widget.weekLimit * 7;
-    allDates =
-        List.generate(totalDays, (i) => startOfWeek.add(Duration(days: i)));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 95,
-      padding: EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(10),
+TextField textFielInfoTask({
+  required HomeDashState state,
+  required HomeDashCubit cubit,
+  required void Function(String) onChanged,
+  required String labelText,
+  required TextEditingController controller,
+  int? maxLines,
+  int? maxLength,
+}) {
+  return TextField(
+    controller: controller,
+    onChanged: onChanged,
+    maxLength: maxLength,
+    maxLines: maxLines ?? 1,
+    decoration: InputDecoration(
+      labelText: labelText,
+      labelStyle: TextStyle(
+        color: Colors.grey[600],
+        fontSize: 14,
       ),
-      child: ValueListenableBuilder<DateTime>(
-          valueListenable: selectedDate,
-          builder: (BuildContext context, DateTime selectedDateValue,
-              Widget? child) {
-            return ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: allDates.length,
-              itemBuilder: (context, index) {
-                DateTime date = allDates[index];
-                bool isPast =
-                    date.isBefore(DateTime(today.year, today.month, today.day));
-                bool isSelected = _isSameDate(date, selectedDateValue);
-
-                return GestureDetector(
-                  onTap: isPast
-                      ? null
-                      : () {
-                          selectedDate.value = DateTime.parse(
-                              DateFormat(date.toString()).format(date));
-                          widget.cubit.dateTask(
-                            dueTo: 'Custom',
-                            dateTime: selectedDate.value.toString(),
-                          );
-                        },
-                  child: Container(
-                    width: 50,
-                    margin: EdgeInsets.symmetric(horizontal: 6),
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? Colors.grey.shade700
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          DateFormat('E').format(date).toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: _getDayColor(date),
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          date.day.toString(),
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: isPast ? AppColors.black45 : AppColors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            );
-          }),
-    );
-  }
-
-  bool _isSameDate(DateTime d1, DateTime d2) {
-    return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
-  }
-
-  Color _getDayColor(DateTime date) {
-    switch (date.weekday) {
-      case DateTime.saturday:
-      case DateTime.sunday:
-        return AppColors.red700;
-      default:
-        return Colors.white;
-    }
-  }
+      enabledBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: Colors.grey.shade500),
+      ),
+    ),
+  );
 }
 
-class CategorySelector extends StatefulWidget {
-  const CategorySelector({
+class StatusSelector extends StatefulWidget {
+  const StatusSelector({
     super.key,
     required this.cubit,
     required this.state,
-    this.category,
+    this.statusTask,
   });
   final HomeDashCubit cubit;
   final HomeDashState state;
-  final String? category;
+  final String? statusTask;
   @override
-  State<CategorySelector> createState() => _CategorySelectorState();
+  State<StatusSelector> createState() => _StatusSelectorState();
 }
 
-class _CategorySelectorState extends State<CategorySelector> {
+class _StatusSelectorState extends State<StatusSelector> {
   late ValueNotifier<String> selectedCategory;
 
   @override
   void initState() {
     super.initState();
-    selectedCategory = ValueNotifier(widget.category ?? '');
+    selectedCategory = ValueNotifier(widget.statusTask ?? '');
+    updateSelectedCategory(
+      widget.statusTask ?? widget.state.categories.first.statuName!,
+    );
   }
 
   @override
   void dispose() {
     selectedCategory.dispose();
     super.dispose();
+  }
+
+  void updateSelectedCategory(String newCategory) {
+    widget.cubit.updateTaskState(
+      category: newCategory,
+      statusId: widget.state.categories
+          .firstWhere((category) => category.statuName == newCategory)
+          .statusId!,
+    );
   }
 
   @override
@@ -461,7 +227,7 @@ class _CategorySelectorState extends State<CategorySelector> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Categories',
+                  'Status',
                   style: TextStyle(
                     color: Colors.grey.shade600,
                     fontWeight: FontWeight.w500,
@@ -477,17 +243,15 @@ class _CategorySelectorState extends State<CategorySelector> {
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
                     itemBuilder: (context, index) {
                       bool isSelected = selectedCategory.value ==
-                          widget.state.categories[index].name;
+                          widget.state.categories[index].statuName;
 
                       return GestureDetector(
                         onTap: () {
                           selectedCategory.value =
-                              widget.state.categories[index].name!;
+                              widget.state.categories[index].statuName!;
 
-                          widget.cubit.categoryTask(
-                            category: widget.state.categories[index].name!,
-                            categoryId:
-                                widget.state.categories[index].idcategory!,
+                          updateSelectedCategory(
+                            widget.state.categories[index].statuName!,
                           );
                         },
                         child: AnimatedContainer(
@@ -508,7 +272,7 @@ class _CategorySelectorState extends State<CategorySelector> {
                           ),
                           child: Center(
                             child: Text(
-                              widget.state.categories[index].name!,
+                              widget.state.categories[index].statuName!,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,

@@ -5,19 +5,12 @@ import 'package:dash_todo_app/features/home_view/data/model/task_info_model.dart
 
 abstract class TaskManagerRepository {
   Future<Either<Failure, void>> addTask({
-    required String title,
-    required String dueDate,
-    required String category,
-    required bool isDone,
-    required String categoryId,
+    required Map<String, dynamic> infoTask,
   });
 
   Future<Either<Failure, void>> updateTask({
     required String taskId,
-    required String title,
-    required String dueDate,
-    required String category,
-    required bool isDone,
+    required Map<String, dynamic> updateTaskInfo,
   });
 
   Future<Either<Failure, void>> deleteTask({required String taskId});

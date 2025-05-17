@@ -19,6 +19,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
+  flutter_boardview: ^0.2.1
   flutter_keyboard_visibility: ^6.0.0
   flutter_localizations:
     sdk: flutter

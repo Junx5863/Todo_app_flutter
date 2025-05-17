@@ -12,25 +12,16 @@ class UpdateTaskUseCase extends BaseUseCase<dynamic, UpdateTaskUseParams> {
   Future<Either<Failure, void>> call(UpdateTaskUseParams params) {
     return taskManagerRepository.updateTask(
       taskId: params.taskId,
-      title: params.title,
-      dueDate: params.dueDate,
-      category: params.category,
-      isDone: params.isDone,
+      updateTaskInfo: params.updateTaskInfo,
     );
   }
 }
 
 class UpdateTaskUseParams {
   UpdateTaskUseParams({
+    required this.updateTaskInfo,
     required this.taskId,
-    required this.title,
-    required this.dueDate,
-    required this.category,
-    required this.isDone,
   });
   final String taskId;
-  final String title;
-  final String dueDate;
-  final String category;
-  final bool isDone;
+  final Map<String, dynamic> updateTaskInfo;
 }

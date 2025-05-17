@@ -14,19 +14,11 @@ class TaskManagerRepositoryImpl extends TaskManagerRepository {
 
   @override
   Future<Either<Failure, void>> addTask({
-    required String title,
-    required String dueDate,
-    required String category,
-    required bool isDone,
-    required String categoryId,
+    required Map<String, dynamic> infoTask,
   }) async {
     try {
       final result = await taskManagerDataSource.addTask(
-        title: title,
-        dueDate: dueDate,
-        category: category,
-        isDone: isDone,
-        categoryId: categoryId,
+        infoTask: infoTask,
       );
       return Right(result);
     } catch (e) {
@@ -74,18 +66,12 @@ class TaskManagerRepositoryImpl extends TaskManagerRepository {
   @override
   Future<Either<Failure, void>> updateTask({
     required String taskId,
-    required String title,
-    required String dueDate,
-    required String category,
-    required bool isDone,
+    required Map<String, dynamic> updateTaskInfo,
   }) async {
     try {
       final result = await taskManagerDataSource.updateTask(
         taskId: taskId,
-        title: title,
-        dueDate: dueDate,
-        category: category,
-        isDone: isDone,
+        updateTaskInfo: updateTaskInfo,
       );
       return Right(result);
     } catch (e) {

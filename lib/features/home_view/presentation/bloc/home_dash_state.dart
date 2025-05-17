@@ -14,33 +14,38 @@ class HomeDashState {
     required this.status,
     required this.dateTime,
     required this.category,
+    required this.statusTask,
     required this.categories,
-    required this.categoryId,
+    required this.statusId,
     required this.errorMessage,
     required this.categoryCounts,
-    required this.categoryProgress,
     required this.titleController,
+    required this.categoryProgress,
+    required this.descriptionController,
   });
 
   factory HomeDashState.initial() => HomeDashState(
         tasks: [],
         isDone: false,
         dueTo: 'Today',
-        categoryId: '',
+        statusId: '',
         categories: [],
         errorMessage: '',
         category: '',
+        statusTask: '',
         categoryCounts: {},
         categoryProgress: {},
         status: HomeDashStatus.initial,
         titleController: TextEditingController(),
+        descriptionController: TextEditingController(),
         dateTime: DateFormat('yyyy-MM-dd').format(DateTime.now()),
       );
   final bool isDone;
   final String dueTo;
   final String dateTime;
   final String category;
-  final String categoryId;
+  final String statusTask;
+  final String statusId;
   final String errorMessage;
   final HomeDashStatus status;
   final List<TaskInfoModel> tasks;
@@ -48,13 +53,15 @@ class HomeDashState {
   final Map<String, int> categoryCounts;
   final Map<String, double> categoryProgress;
   final TextEditingController titleController;
+  final TextEditingController descriptionController;
 
   HomeDashState copyWith({
     bool? isDone,
     String? dueTo,
     String? dateTime,
     String? category,
-    String? categoryId,
+    String? statusId,
+    String? statusTask,
     String? errorMessage,
     HomeDashStatus? status,
     List<TaskInfoModel>? tasks,
@@ -62,6 +69,7 @@ class HomeDashState {
     Map<String, int>? categoryCounts,
     Map<String, double>? categoryProgress,
     TextEditingController? titleController,
+    TextEditingController? descriptionController,
   }) {
     return HomeDashState(
       dueTo: dueTo ?? this.dueTo,
@@ -70,12 +78,15 @@ class HomeDashState {
       status: status ?? this.status,
       category: category ?? this.category,
       dateTime: dateTime ?? this.dateTime,
-      categoryId: categoryId ?? this.categoryId,
+      statusId: statusId ?? this.statusId,
+      statusTask: statusTask ?? this.statusTask,
       categories: categories ?? this.categories,
       errorMessage: errorMessage ?? this.errorMessage,
       categoryCounts: categoryCounts ?? this.categoryCounts,
       titleController: titleController ?? this.titleController,
       categoryProgress: categoryProgress ?? this.categoryProgress,
+      descriptionController:
+          descriptionController ?? this.descriptionController,
     );
   }
 }

@@ -11,27 +11,15 @@ class CreateTaskUseCase extends BaseUseCase<dynamic, CreateTaskUseParams> {
   @override
   Future<Either<Failure, void>> call(CreateTaskUseParams params) {
     return taskManagerRepository.addTask(
-      title: params.title,
-      dueDate: params.dueDate,
-      category: params.category,
-      isDone: params.isDone,
-      categoryId: params.categoryId,
+      infoTask: params.infoTask,
     );
   }
 }
 
 class CreateTaskUseParams {
   CreateTaskUseParams({
-    required this.title,
-    required this.dueDate,
-    required this.category,
-    required this.isDone,
-    required this.categoryId,
+    required this.infoTask,
   });
 
-  final String title;
-  final String dueDate;
-  final String category;
-  final bool isDone;
-  final String categoryId;
+  final Map<String, dynamic> infoTask;
 }

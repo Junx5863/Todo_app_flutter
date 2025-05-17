@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // General Colors
-  static const Color primary = Color(0xFF7B8B7E); // Verde grisáceo
+  static const Color primary = Colors.blueGrey; // Verde grisáceo
   static const Color background = Colors.black;
   static const Color white = Colors.white;
   static const Color white70 = Colors.white70;

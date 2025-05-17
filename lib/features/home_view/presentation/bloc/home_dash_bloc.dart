@@ -48,7 +48,7 @@ class HomeDashCubit extends Cubit<HomeDashState> {
           final Map<String, int> categoryCounts = {};
 
           for (final task in tasks) {
-            final category = task.category ?? 'Unknown';
+            final category = task.categoryName ?? 'Unknown';
             categoryCounts[category] = (categoryCounts[category] ?? 0) + 1;
           }
 
@@ -93,41 +93,15 @@ class HomeDashCubit extends Cubit<HomeDashState> {
     );
   }
 
-  void dateTask({
-    String? dueTo,
-    String? dateTime,
-  }) {
-    switch (dueTo) {
-      case 'Today':
-        emit(state.copyWith(
-          dateTime: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-        ));
-        break;
-      case 'Tomorrow':
-        emit(state.copyWith(
-          dateTime: DateFormat('yyyy-MM-dd')
-              .format(DateTime.now().add(const Duration(days: 1))),
-        ));
-        break;
-      case 'Custom':
-        emit(state.copyWith(
-          dateTime: dateTime,
-        ));
-        break;
-      default:
-        emit(state.copyWith(
-          dateTime: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-        ));
-    }
-  }
-
-  void categoryTask({
+  void updateTaskState({
     String? category,
-    String? categoryId,
+    String? statusId,
+    String? status,
   }) {
     emit(state.copyWith(
-      category: category,
-      categoryId: categoryId,
+      category: category ?? state.category,
+      statusId: statusId ?? state.statusId,
+      statusTask: status ?? state.statusTask,
     ));
   }
 
@@ -144,13 +118,14 @@ class HomeDashCubit extends Cubit<HomeDashState> {
     }
 
     final result = await _addTaskUseCase(
-      CreateTaskUseParams(
-        title: state.titleController.text,
-        dueDate: state.dateTime,
-        category: state.category,
-        isDone: state.isDone,
-        categoryId: state.categoryId,
-      ),
+      CreateTaskUseParams(infoTask: {
+        'nameTask': state.titleController.text,
+        'descripTask': state.descriptionController.text,
+        'dateCreate':
+            DateFormat('yyyy-MM-dd').format(DateTime.now()).toString(),
+        'categoryName': state.category,
+        'categoryId': state.statusId,
+      }),
     );
 
     result.fold((dynamic fail) {
@@ -158,9 +133,10 @@ class HomeDashCubit extends Cubit<HomeDashState> {
         status: HomeDashStatus.error,
       ));
     }, (response) {
+      state.titleController.clear();
+      state.descriptionController.clear();
       emit(state.copyWith(
         status: HomeDashStatus.initial,
-        titleController: TextEditingController(),
         dateTime: DateFormat('yyyy-MM-dd').format(DateTime.now()),
         category: 'Design',
       ));
@@ -183,39 +159,13 @@ class HomeDashCubit extends Cubit<HomeDashState> {
     });
   }
 
-  void setCheckIsDone({
-    required bool isDone,
-  }) {
-    emit(state.copyWith(
-      isDone: isDone,
-    ));
-  }
-
-  void setTextAndDate({
-    required String titleTask,
-    DateTime? dateTime,
-  }) {
-    final dateFormat = DateFormat('yyyy-MM-dd').format(dateTime!);
-
-    if (dateFormat ==
-        DateFormat('yyyy-MM-dd')
-            .format(DateTime.now().add(const Duration(days: 1)))) {
-      emit(state.copyWith(
-        dueTo: 'Tomorrow',
-        titleController: state.titleController..text = titleTask,
-      ));
-      return;
-    }
-    emit(state.copyWith(
-      dueTo: 'Custom',
-      titleController: state.titleController..text = titleTask,
-    ));
-  }
-
-  void updateTaskInfo({
+  Future<void> updateTaskInfo({
     required String taskId,
-    bool? isDone,
   }) async {
+    emit(state.copyWith(
+      status: HomeDashStatus.loading,
+    ));
+
     // Validar los datos antes de actualizar
     final validationError = _validateTaskData();
     if (validationError != null) {
@@ -226,41 +176,69 @@ class HomeDashCubit extends Cubit<HomeDashState> {
       return;
     }
 
-    // Llamar a la función genérica para actualizar la tarea
-    await _updateTask(
-      taskId: taskId,
-      isDone: isDone,
+    final result = await _updateTaskUseCase(
+      UpdateTaskUseParams(taskId: taskId, updateTaskInfo: {
+        'nameTask': state.titleController.text,
+        'descripTask': state.descriptionController.text,
+        'dateCreate':
+            DateFormat('yyyy-MM-dd').format(DateTime.now()).toString(),
+        'categoryName': state.category,
+        'categoryId': state.statusId,
+      }),
+    );
+
+    result.fold(
+      (dynamic fail) {
+        // Manejo detallado de errores
+        String errorMessage = 'An error occurred';
+        if (fail is UpdateTaskFailure) {
+          errorMessage = 'Failed to update task. Please try again.';
+        }
+
+        emit(state.copyWith(
+          status: HomeDashStatus.error,
+          errorMessage: errorMessage,
+        ));
+      },
+      (response) {
+        emit(state.copyWith(
+          status: HomeDashStatus.initial,
+        ));
+      },
     );
   }
 
-  void updateTaskDone({
-    required String taskId,
-    bool? isDone,
-  }) async {
-    // Llamar a la función genérica para actualizar la tarea
-    await _updateTask(
-      taskId: taskId,
-      isDone: isDone,
-    );
+// Función privada para validar los datos de la tarea
+  String? _validateTaskData() {
+    if (state.titleController.text.isEmpty) {
+      return 'Please enter a title';
+    } else if (state.category.isEmpty || state.statusId.isEmpty) {
+      return 'Please select a category';
+    }
+    return null; // No hay errores
   }
 
-// Función privada para actualizar una tarea
-  Future<void> _updateTask({
-    required String taskId,
-    bool? isDone,
-  }) async {
-    emit(state.copyWith(
-      status: HomeDashStatus.loading,
-      isDone: isDone,
-    ));
+  void setTextTask({
+    String? titleTask,
+    String? descriptionTask,
+  }) {
+    state.titleController.text = titleTask ?? state.titleController.text;
+    state.descriptionController.text =
+        descriptionTask ?? state.descriptionController.text;
+  }
 
+  void updateTaskId({
+    required String taskId,
+    required String categoryName,
+    required String categoryId,
+  }) async {
     final result = await _updateTaskUseCase(
       UpdateTaskUseParams(
         taskId: taskId,
-        title: state.titleController.text,
-        dueDate: state.dateTime,
-        category: state.category,
-        isDone: state.isDone,
+        updateTaskInfo: {
+          'categoryName': categoryName,
+          'categoryId': categoryId,
+        },
       ),
     );
 
@@ -278,18 +256,10 @@ class HomeDashCubit extends Cubit<HomeDashState> {
         ));
       },
       (response) {
-        emit(state.copyWith(status: HomeDashStatus.initial));
+        emit(state.copyWith(
+          status: HomeDashStatus.initial,
+        ));
       },
     );
-  }
-
-// Función privada para validar los datos de la tarea
-  String? _validateTaskData() {
-    if (state.titleController.text.isEmpty) {
-      return 'Please enter a title';
-    } else if (state.category.isEmpty || state.categoryId.isEmpty) {
-      return 'Please select a category';
-    }
-    return null; // No hay errores
   }
 }

@@ -6,19 +6,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 abstract class TaskManagerDataSource {
   Future<void> addTask({
-    required String title,
-    required String dueDate,
-    required String category,
-    required bool isDone,
-    required String categoryId,
+    required Map<String, dynamic> infoTask,
   });
 
   Future<void> updateTask({
     required String taskId,
-    required String title,
-    required String dueDate,
-    required String category,
-    required bool isDone,
+    required Map<String, dynamic> updateTaskInfo,
   });
 
   Future<void> deleteTask({required String taskId});
@@ -33,22 +26,14 @@ class TaskManagerDataSourceImpl extends TaskManagerDataSource {
 
   @override
   Future<void> addTask({
-    required String title,
-    required String dueDate,
-    required String category,
-    required bool isDone,
-    required String categoryId,
+    required Map<String, dynamic> infoTask,
   }) async {
     try {
       final refDb = _db.collection('task').doc();
       final result = await refDb.set({
-        'title': title,
-        'dueDate': dueDate,
+        ...infoTask,
         'userId': _auth.currentUser?.uid,
-        'isDone': isDone,
-        'idTask': refDb.id,
-        'category': category,
-        'categoryId': categoryId,
+        'taskId': refDb.id,
       });
       return result;
     } catch (e) {
@@ -75,9 +60,10 @@ class TaskManagerDataSourceImpl extends TaskManagerDataSource {
   Stream<List<TaskInfoModel>> getTasksList() {
     try {
       return FirebaseFirestore.instance.collection('task').snapshots().map(
-          (snapshot) => snapshot.docs
-              .map((doc) => TaskInfoModel.fromJson(doc.data()))
-              .toList());
+            (snapshot) => snapshot.docs.map((doc) {
+              return TaskInfoModel.fromJson(doc.data());
+            }).toList(),
+          );
     } on FirebaseException catch (e) {
       throw Exception(e.toString());
     } catch (e) {
@@ -88,24 +74,14 @@ class TaskManagerDataSourceImpl extends TaskManagerDataSource {
   @override
   Future<void> updateTask({
     required String taskId,
-    required String title,
-    required String dueDate,
-    required String category,
-    required bool isDone,
+    required Map<String, dynamic> updateTaskInfo,
   }) {
     try {
       final refDb = _db.collection('task').doc(taskId);
-      if (title.isEmpty) {
-        return refDb.update({
-          'isDone': isDone,
-        });
-      }
-      return refDb.update({
-        'title': title,
-        'dueDate': dueDate,
-        'category': category,
-        'isDone': isDone,
-      });
+
+      return refDb.update(
+        updateTaskInfo,
+      );
     } on FirebaseException catch (e) {
       // Handle error
       throw Exception('Failed to update task: $e');

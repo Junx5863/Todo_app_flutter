@@ -12,21 +12,21 @@ String categoryModelToJson(List<CategoryModel> data) =>
     json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 class CategoryModel {
-  final String? idcategory;
-  final String? name;
+  final String? statusId;
+  final String? statuName;
 
   CategoryModel({
-    this.idcategory,
-    this.name,
+    this.statusId,
+    this.statuName,
   });
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) => CategoryModel(
-        idcategory: json["idCategory"],
-        name: json["name"],
+        statusId: json["statusId"],
+        statuName: json["statusName"],
       );
 
   Map<String, dynamic> toJson() => {
-        "idCategory": idcategory,
-        "name": name,
+        "statusId": statusId,
+        "statusName": statuName,
       };
 }
