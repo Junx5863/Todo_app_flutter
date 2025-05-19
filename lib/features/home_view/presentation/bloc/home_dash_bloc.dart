@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:bloc/bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dash_todo_app/core/base/base_usecase.dart';
@@ -70,6 +72,7 @@ class HomeDashCubit extends Cubit<HomeDashState> {
             state.titleController.clear();
             state.descriptionController.clear();
             emit(state.copyWith(
+              status: HomeDashStatusVariables.syncOffline,
               tasks: tasks,
             ));
           },
@@ -144,12 +147,12 @@ class HomeDashCubit extends Cubit<HomeDashState> {
         status: 'successTask',
       );
     });
-    state.titleController.clear();
-    state.descriptionController.clear();
   }
 
-  void deleteTask(
-      {required String taskId, required BuildContext context}) async {
+  void deleteTask({
+    required String taskId,
+    required BuildContext context,
+  }) async {
     emit(state.copyWith(status: HomeDashStatusVariables.loading));
     final hasIntenet = await hasInternetConnection();
 
@@ -164,6 +167,9 @@ class HomeDashCubit extends Cubit<HomeDashState> {
         status: 'error',
       );
     }, (response) {
+      emit(state.copyWith(
+        status: HomeDashStatusVariables.syncOffline,
+      ));
       modalShowResponse(
         context: context,
         message: 'Task deleted successfully',

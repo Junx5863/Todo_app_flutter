@@ -67,7 +67,11 @@ Future<dynamic> modalBottomSheetCard({
                               ],
                             ),
                             child: IconButton(
-                              onPressed: () => context.pop(),
+                              onPressed: () {
+                                context.pop();
+                                state.titleController.clear();
+                                state.descriptionController.clear();
+                              },
                               icon: Icon(Icons.close, color: AppColors.grey600),
                             ),
                           )
@@ -118,7 +122,10 @@ Future<dynamic> modalBottomSheetCard({
                         width: double.infinity,
                         height: MediaQuery.of(context).size.height * 0.05,
                         child: ElevatedButton(
-                          onPressed: onSelected,
+                          onPressed: () {
+                            onSelected();
+                            context.pop();
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             padding: const EdgeInsets.symmetric(

@@ -33,6 +33,7 @@ class TaskManagerRepositoryImpl extends TaskManagerRepository {
         final result = await taskManagerDataSource.addTask(
           infoTask: infoTask,
         );
+
         return Right(result);
       } else {
         final task = TaskLocalModel(
@@ -73,6 +74,9 @@ class TaskManagerRepositoryImpl extends TaskManagerRepository {
         await taskManagerDataSource.deleteTask(
           taskId: taskId,
         );
+
+        await taskLocalDataSource.deleteTask(taskId);
+
         return Right(true);
       } else {
         if (!deletedTaskIds.contains(taskId)) {
@@ -97,26 +101,27 @@ class TaskManagerRepositoryImpl extends TaskManagerRepository {
   @override
   Stream<Either<Failure, List<TaskInfoModel>>> getTasks({
     required bool hasConnection,
-  }) {
+  }) async* {
     try {
       if (hasConnection) {
-        // Obtenemos el stream de tareas remotas
+        // 1. Eliminar tareas marcadas para borrar
+        await deleteTaskInLocal();
 
-        return taskManagerDataSource.getTasksList().asyncMap(
-          (tasks) async {
-            try {
-              await syncPendingTasks(tasks);
-            } catch (e) {
-              return Left(GetTasksFailure(message: e.toString()));
-            }
+        // 2. Sincronizar tareas pendientes
+        await syncPendingTasks();
 
-            // Retornamos las tareas actualizadas
-            return Right(tasks);
-          },
-        );
+        // 3. Escuchar tareas remotas y guardarlas en local
+        final remoteTasksStream = taskManagerDataSource.getTasksList();
+
+        yield* remoteTasksStream.asyncMap((remoteTasks) async {
+          // Copiamos las tareas remotas al local
+          await copyRemotTaskInLocal(remoteTasks);
+
+          return Right(remoteTasks);
+        });
       } else {
         // Escuchamos cambios locales en tiempo real desde Hive
-        return taskLocalDataSource.getAllTaskList().asyncMap((localTasks) {
+        yield* taskLocalDataSource.getAllTaskList().asyncMap((localTasks) {
           final taskInfoList = localTasks.map((local) {
             return TaskInfoModel(
               taskId: local.taskId,
@@ -132,13 +137,7 @@ class TaskManagerRepositoryImpl extends TaskManagerRepository {
         });
       }
     } catch (e) {
-      return Stream.value(
-        Left(
-          GetTasksFailure(
-            message: e.toString(),
-          ),
-        ),
-      );
+      Left(GetTasksFailure(message: e.toString()));
     }
   }
 
@@ -184,59 +183,85 @@ class TaskManagerRepositoryImpl extends TaskManagerRepository {
         .join();
   }
 
-  Future<void> syncPendingTasks(List<TaskInfoModel> remoteTasks) async {
-    //* 1. Sincronizar tareas eliminadas
-    // Obtener la lista de IDs de tareas eliminadas desde SharedPreferences
-    final deletedTaskIds =
-        sharedPreferences.getStringList('deleted_task_ids') ?? [];
-    // Eliminar las tareas locales que están en la lista de IDs eliminados
-    await Future.wait(deletedTaskIds.map(
-      (taskId) async {
-        await taskManagerDataSource.deleteTask(taskId: taskId);
-      },
-    ));
-    // Limpiar la lista de IDs eliminados en SharedPreferences
-    await sharedPreferences.remove('deleted_task_ids');
+  Future deleteTaskInLocal() async {
+    try {
+      final deletedTaskIds =
+          sharedPreferences.getStringList('deleted_task_ids') ?? [];
+      // Eliminar las tareas locales que están en la lista de IDs eliminados
+      if (deletedTaskIds.isNotEmpty) {
+        await Future.wait(deletedTaskIds.map(
+          (taskId) async {
+            await taskManagerDataSource.deleteTask(taskId: taskId);
+          },
+        ));
+        // Limpiar la lista de IDs eliminados en SharedPreferences
+        await sharedPreferences.remove('deleted_task_ids');
+      }
+    } catch (e) {
+      throw Left(
+        DeleteTaskFailure(
+          message: e.toString(),
+        ),
+      );
+    }
+  }
 
-    //* 2. Sincronizar tareas pendientes
-    // Obtener las tareas locales actuales
-    final localTaskList = await taskLocalDataSource.getAllTaskList().first;
+  bool _isSyncing = false;
+  Future<void> syncPendingTasks() async {
+    if (_isSyncing) return;
+    _isSyncing = true;
+    try {
+      final localTaskListStream = taskLocalDataSource.getAllTaskList();
 
-    await Future.wait(localTaskList.map(
-      (localTask) async {
-        if (localTask.pendingTaskId.contains('peding_task')) {
+      final localTask = await localTaskListStream.first;
+      for (final local in localTask) {
+        if (local.pendingTaskId.contains('peding_task')) {
           await taskManagerDataSource.addTask(
             infoTask: {
-              'nameTask': localTask.nameTask,
-              'descripTask': localTask.descripTask,
-              'dateCreate': DateFormat('yyyy-MM-dd')
-                  .format(localTask.dateCreate)
-                  .toString(),
-              'categoryName': localTask.categoryName,
-              'categoryId': localTask.categoryId,
+              'nameTask': local.nameTask,
+              'descripTask': local.descripTask,
+              'dateCreate':
+                  DateFormat('yyyy-MM-dd').format(local.dateCreate).toString(),
+              'categoryName': local.categoryName,
+              'categoryId': local.categoryId,
             },
           );
-          await taskLocalDataSource.deleteTask(localTask.taskId);
+          await taskLocalDataSource.deleteTask(local.taskId);
         }
-      },
-    ));
-
-    //* 3. Guardar las tareas remotas en local, nuevas tareas
-    for (final task in remoteTasks) {
-      final existingTask = await taskLocalDataSource.getTaskById(task.taskId!);
-      if (existingTask == null) {
-        await taskLocalDataSource.saveOrUpdateTask(
-          infoTask: TaskLocalModel(
-            taskId: task.taskId!,
-            nameTask: task.nameTask!,
-            descripTask: task.descripTask!,
-            dateCreate: task.dateCreate!,
-            categoryName: task.categoryName!,
-            categoryId: task.categoryId!,
-            pendingTaskId: '',
-          ),
-        );
       }
+    } catch (e) {
+      Left(false);
+    } finally {
+      _isSyncing = false;
+    }
+  }
+
+  Future copyRemotTaskInLocal(List<TaskInfoModel> remoteTasks) async {
+    //* 3. Guardar las tareas remotas en local, nuevas tareas
+    try {
+      for (final task in remoteTasks) {
+        final existingTask =
+            await taskLocalDataSource.getTaskById(task.taskId!);
+        if (existingTask == null) {
+          await taskLocalDataSource.saveOrUpdateTask(
+            infoTask: TaskLocalModel(
+              taskId: task.taskId!,
+              nameTask: task.nameTask!,
+              descripTask: task.descripTask!,
+              dateCreate: task.dateCreate!,
+              categoryName: task.categoryName!,
+              categoryId: task.categoryId!,
+              pendingTaskId: '',
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      throw Left(
+        CopyRemotTaskInLocalFailure(
+          message: e.toString(),
+        ),
+      );
     }
   }
 

@@ -136,35 +136,26 @@ class HeaderWidget extends StatelessWidget {
                   const SizedBox(width: 10),
                   // Booton Refresh Data
                   GestureDetector(
-                    onTap: () {
-                      context.read<HomeDashCubit>().init(context);
-                    },
-                    child: state.status != HomeDashStatusVariables.syncOffline
-                        ? Text(
-                            'Syncing...',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: AppColors.primary,
-                            ),
-                          )
-                        : Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            child: Text(
-                              'Refresh Offline',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: AppColors.white,
-                              ),
-                            ),
+                      onTap: () {
+                        context.read<HomeDashCubit>().init(context);
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        child: Text(
+                          'Refresh',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppColors.white,
                           ),
-                  ),
+                        ),
+                      )),
                 ],
               )),
         ],
@@ -305,10 +296,8 @@ class _DashBoardWidgetState extends State<DashBoardWidget> {
   ) {
     return GestureDetector(
       onTap: () {
-        bloc.setTextTask(
-          titleTask: taskInfo.nameTask,
-          descriptionTask: taskInfo.descripTask,
-        );
+        state.titleController.text = taskInfo.nameTask!;
+        state.descriptionController.text = taskInfo.descripTask!;
         modalBottomSheetCard(
           context: context,
           title: 'Update Task',
@@ -320,7 +309,6 @@ class _DashBoardWidgetState extends State<DashBoardWidget> {
               context: context,
               taskId: taskInfo.taskId!,
             );
-            context.pop();
           },
         );
       },

@@ -85,3 +85,9 @@ class SignOutFailure extends Failure {
 
   final String message;
 }
+
+class CopyRemotTaskInLocalFailure extends Failure {
+  CopyRemotTaskInLocalFailure({required this.message});
+
+  final String message;
+}

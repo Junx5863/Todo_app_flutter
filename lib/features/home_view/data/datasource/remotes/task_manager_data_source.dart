@@ -5,7 +5,7 @@ import 'package:dash_todo_app/injection_container.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 abstract class TaskManagerDataSource {
-  Future<void> addTask({
+  Future<bool> addTask({
     required Map<String, dynamic> infoTask,
   });
 
@@ -27,7 +27,7 @@ class TaskManagerDataSourceImpl extends TaskManagerDataSource {
   final FirebaseFirestore _db = sl<FirebaseFirestore>();
 
   @override
-  Future<void> addTask({
+  Future<bool> addTask({
     required Map<String, dynamic> infoTask,
   }) async {
     try {
@@ -37,7 +37,7 @@ class TaskManagerDataSourceImpl extends TaskManagerDataSource {
         'userId': _auth.currentUser?.uid,
         'taskId': refDb.id,
       });
-      return result;
+      return true;
     } catch (e) {
       // Handle error
       throw Exception('Failed to add task: $e');

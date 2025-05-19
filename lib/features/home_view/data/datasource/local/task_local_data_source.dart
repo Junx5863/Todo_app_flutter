@@ -31,10 +31,13 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
 
   @override
   Stream<List<TaskLocalModel>> getAllTaskList() {
-    return Stream.value(taskBox.values.toList());
-    /* return taskBox.watch().map((event) {
-      return taskBox.values.toList();
-    }); */
+    final tasks = taskBox.values.toList();
+
+    print('----------------------------');
+    print('taskBox.values: ${tasks.length}');
+    print('----------------------------');
+
+    return Stream.value(tasks);
   }
 
   @override
