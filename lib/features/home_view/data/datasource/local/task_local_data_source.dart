@@ -33,10 +33,6 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
   Stream<List<TaskLocalModel>> getAllTaskList() {
     final tasks = taskBox.values.toList();
 
-    print('----------------------------');
-    print('taskBox.values: ${tasks.length}');
-    print('----------------------------');
-
     return Stream.value(tasks);
   }
 

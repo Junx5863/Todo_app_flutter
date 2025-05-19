@@ -32,7 +32,7 @@ class TaskManagerDataSourceImpl extends TaskManagerDataSource {
   }) async {
     try {
       final refDb = _db.collection('task').doc();
-      final result = await refDb.set({
+      await refDb.set({
         ...infoTask,
         'userId': _auth.currentUser?.uid,
         'taskId': refDb.id,
