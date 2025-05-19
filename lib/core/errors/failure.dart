@@ -67,3 +67,15 @@ class GetCategoriesFailure extends Failure {
 
   final String message;
 }
+
+class SaveOrUpdateTaskLocalFailure extends Failure {
+  SaveOrUpdateTaskLocalFailure({required this.message});
+
+  final String message;
+}
+
+class DeleteAllTasksFailure extends Failure {
+  DeleteAllTasksFailure({required this.message});
+
+  final String message;
+}

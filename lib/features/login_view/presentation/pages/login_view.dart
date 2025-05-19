@@ -1,5 +1,6 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:dash_todo_app/core/base/base_page.dart';
+import 'package:dash_todo_app/core/navigation/name_router.dart';
 import 'package:dash_todo_app/core/styles/app_them.dart';
 import 'package:dash_todo_app/core/utils/modals/error_page.dart';
 import 'package:dash_todo_app/features/login_view/presentation/bloc/social_auth_bloc.dart';
@@ -7,6 +8,7 @@ import 'package:dash_todo_app/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginPage extends BasePage<SocialAuthState, SocialAuthBloc> {
   LoginPage({super.key});
@@ -29,7 +31,11 @@ class LoginPage extends BasePage<SocialAuthState, SocialAuthBloc> {
             context: context,
             title: state.errorTitle,
             errorMessage: state.errorMessage,
+            isError: true,
           );
+        }
+        if (state.status == SocialAuthStatus.success) {
+          context.go(RoutePathsName.home);
         }
       },
       child: KeyboardDismissOnTap(

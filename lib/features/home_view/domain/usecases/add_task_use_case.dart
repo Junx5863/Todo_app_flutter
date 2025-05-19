@@ -9,17 +9,18 @@ class CreateTaskUseCase extends BaseUseCase<dynamic, CreateTaskUseParams> {
   final TaskManagerRepository taskManagerRepository;
 
   @override
-  Future<Either<Failure, void>> call(CreateTaskUseParams params) {
-    return taskManagerRepository.addTask(
-      infoTask: params.infoTask,
-    );
-  }
+  Future<Either<Failure, void>> call(CreateTaskUseParams params) =>
+      taskManagerRepository.addTask(
+        infoTask: params.infoTask,
+        hasConnection: params.hasConnection,
+      );
 }
 
 class CreateTaskUseParams {
   CreateTaskUseParams({
+    required this.hasConnection,
     required this.infoTask,
   });
-
+  final bool hasConnection;
   final Map<String, dynamic> infoTask;
 }

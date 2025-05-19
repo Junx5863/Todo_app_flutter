@@ -8,6 +8,7 @@ showErrorsModal({
   required BuildContext context,
   required String title,
   required String errorMessage,
+  required bool isError,
 }) {
   showDialog(
     barrierDismissible: false,
@@ -35,13 +36,21 @@ showErrorsModal({
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Lottie.asset(
-                      'assets/lottie/error_animation.json',
-                      width: 100,
-                      height: 100,
-                      fit: BoxFit.fill,
-                      repeat: true,
-                    ),
+                    isError
+                        ? Lottie.asset(
+                            'assets/lottie/error_animation.json',
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.fill,
+                            repeat: true,
+                          )
+                        : Lottie.asset(
+                            'assets/lottie/success.json',
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.fill,
+                            repeat: true,
+                          ),
                     Text(
                       title,
                       style: TextStyle(

@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:dash_todo_app/core/base/base_usecase.dart';
 import 'package:dash_todo_app/core/errors/failure.dart';
-import 'package:dash_todo_app/features/home_view/data/model/categories_model.dart';
+import 'package:dash_todo_app/features/home_view/data/model/remotes/categories_model.dart';
 import 'package:dash_todo_app/features/home_view/domain/repositories/task_manager_repository.dart';
 
 class GetCategoriesUseCase extends BaseUseCase<List<CategoryModel>, NoParams> {

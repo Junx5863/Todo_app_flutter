@@ -57,7 +57,7 @@ class SocialAuthBloc extends Cubit<SocialAuthState> {
       }
     }, (User? response) {
       emit(state.copyWith(
-        status: SocialAuthStatus.initial,
+        status: SocialAuthStatus.success,
       ));
     });
   }

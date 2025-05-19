@@ -1,8 +1,9 @@
 import 'package:bloc/bloc.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dash_todo_app/core/base/base_usecase.dart';
 import 'package:dash_todo_app/core/errors/failure.dart';
-import 'package:dash_todo_app/features/home_view/data/model/categories_model.dart';
-import 'package:dash_todo_app/features/home_view/data/model/task_info_model.dart';
+import 'package:dash_todo_app/features/home_view/data/model/remotes/categories_model.dart';
+import 'package:dash_todo_app/features/home_view/data/model/remotes/task_info_model.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/add_task_use_case.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/delete_task_use_case.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/get_categories_use_case.dart';
@@ -33,60 +34,49 @@ class HomeDashCubit extends Cubit<HomeDashState> {
   final CreateTaskUseCase _addTaskUseCase;
   final GetCategoriesUseCase _getCategoriesUseCase;
 
-  void init() async {
-    emit(state.copyWith(status: HomeDashStatus.loading));
+  void init(BuildContext context) async {
+    emit(state.copyWith(status: HomeDashStatusVariables.loading));
     getCategories();
+    final hasIntenet = await hasInternetConnection();
 
-    _getTaskUseCase.callStream(NoParams()).listen(
+    _getTaskUseCase.callStream(GetTaskParams(hasConnection: hasIntenet)).listen(
       (result) {
-        result.fold((dynamic fail) {
-          emit(state.copyWith(
-            status: HomeDashStatus.error,
-            errorMessage: 'Failed to load tasks',
-          ));
-        }, (List<TaskInfoModel> tasks) {
-          final Map<String, int> categoryCounts = {};
-
-          for (final task in tasks) {
-            final category = task.categoryName ?? 'Unknown';
-            categoryCounts[category] = (categoryCounts[category] ?? 0) + 1;
-          }
-
-          final totalTasks =
-              categoryCounts.values.fold<int>(0, (sum, count) => sum + count);
-
-          final Map<String, double> categoryProgress = {};
-          for (final entry in categoryCounts.entries) {
-            categoryProgress[entry.key] =
-                totalTasks > 0 ? entry.value / totalTasks : 0.0;
-          }
-
-          emit(state.copyWith(
-            status: HomeDashStatus.initial,
-            tasks: tasks,
-            categoryCounts: categoryCounts,
-            categoryProgress: categoryProgress, // ← nuevo campo
-          ));
-        });
+        result.fold(
+          (dynamic fail) {
+            emit(
+              state.copyWith(
+                status: HomeDashStatusVariables.error,
+                errorMessage: 'Failed to load tasks',
+              ),
+            );
+          },
+          (List<TaskInfoModel> tasks) {
+            state.titleController.clear();
+            state.descriptionController.clear();
+            emit(state.copyWith(
+              tasks: tasks,
+            ));
+          },
+        );
       },
     );
   }
 
   void getCategories() async {
-    emit(state.copyWith(status: HomeDashStatus.loading));
+    emit(state.copyWith(status: HomeDashStatusVariables.loading));
 
     final result = await _getCategoriesUseCase(NoParams());
 
     result.fold(
       (dynamic fail) {
         emit(state.copyWith(
-          status: HomeDashStatus.error,
+          status: HomeDashStatusVariables.error,
           errorMessage: 'Failed to load categories',
         ));
       },
       (List<CategoryModel> r) {
         emit(state.copyWith(
-          status: HomeDashStatus.initial,
+          status: HomeDashStatusVariables.initial,
           categories: r,
         ));
       },
@@ -106,56 +96,61 @@ class HomeDashCubit extends Cubit<HomeDashState> {
   }
 
   void createTask() async {
-    emit(state.copyWith(status: HomeDashStatus.loading));
+    bool isValid = _validateTaskData();
 
-    final validationError = _validateTaskData();
-    if (validationError != null) {
-      emit(state.copyWith(
-        status: HomeDashStatus.error,
-        errorMessage: validationError,
-      ));
-      return;
-    }
+    if (!isValid) return;
+
+    final hasIntenet = await hasInternetConnection();
 
     final result = await _addTaskUseCase(
-      CreateTaskUseParams(infoTask: {
-        'nameTask': state.titleController.text,
-        'descripTask': state.descriptionController.text,
-        'dateCreate':
-            DateFormat('yyyy-MM-dd').format(DateTime.now()).toString(),
-        'categoryName': state.category,
-        'categoryId': state.statusId,
-      }),
+      CreateTaskUseParams(
+        hasConnection: hasIntenet,
+        infoTask: {
+          'nameTask': state.titleController.text,
+          'descripTask': state.descriptionController.text,
+          'dateCreate':
+              DateFormat('yyyy-MM-dd').format(DateTime.now()).toString(),
+          'categoryName': state.category,
+          'categoryId': state.statusId,
+        },
+      ),
     );
-
     result.fold((dynamic fail) {
       emit(state.copyWith(
-        status: HomeDashStatus.error,
+        status: HomeDashStatusVariables.error,
+        errorStatus: 'error',
+        errorMessage: 'Failed to create task',
       ));
-    }, (response) {
-      state.titleController.clear();
-      state.descriptionController.clear();
+    }, (dynamic r) {
       emit(state.copyWith(
-        status: HomeDashStatus.initial,
+        status: HomeDashStatusVariables.successTask,
+        errorStatus: 'successTask',
         dateTime: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-        category: 'Design',
       ));
     });
+    state.titleController.clear();
+    state.descriptionController.clear();
   }
 
   void deleteTask({required String taskId}) async {
-    emit(state.copyWith(status: HomeDashStatus.loading));
+    emit(state.copyWith(status: HomeDashStatusVariables.loading));
+    final hasIntenet = await hasInternetConnection();
 
     final result = await _deleteTaskUseCase(
-      DeleteTaskUseParams(taskId: taskId),
+      DeleteTaskUseParams(taskId: taskId, hasConnection: hasIntenet),
     );
 
     result.fold((dynamic fail) {
       emit(state.copyWith(
-        status: HomeDashStatus.error,
+        status: HomeDashStatusVariables.error,
+        errorStatus: 'error',
+        errorMessage: 'Failed to delete task',
       ));
     }, (response) {
-      emit(state.copyWith(status: HomeDashStatus.initial));
+      emit(state.copyWith(
+        status: HomeDashStatusVariables.deleteTask,
+        errorMessage: 'Task deleted successfully',
+      ));
     });
   }
 
@@ -163,18 +158,11 @@ class HomeDashCubit extends Cubit<HomeDashState> {
     required String taskId,
   }) async {
     emit(state.copyWith(
-      status: HomeDashStatus.loading,
+      status: HomeDashStatusVariables.loading,
     ));
 
     // Validar los datos antes de actualizar
-    final validationError = _validateTaskData();
-    if (validationError != null) {
-      emit(state.copyWith(
-        status: HomeDashStatus.error,
-        errorMessage: validationError,
-      ));
-      return;
-    }
+    //_validateTaskData();
 
     final result = await _updateTaskUseCase(
       UpdateTaskUseParams(taskId: taskId, updateTaskInfo: {
@@ -190,32 +178,51 @@ class HomeDashCubit extends Cubit<HomeDashState> {
     result.fold(
       (dynamic fail) {
         // Manejo detallado de errores
-        String errorMessage = 'An error occurred';
         if (fail is UpdateTaskFailure) {
-          errorMessage = 'Failed to update task. Please try again.';
+          emit(state.copyWith(
+            status: HomeDashStatusVariables.error,
+            errorMessage: 'Failed to update task. Please try again.',
+          ));
         }
-
-        emit(state.copyWith(
-          status: HomeDashStatus.error,
-          errorMessage: errorMessage,
-        ));
       },
       (response) {
         emit(state.copyWith(
-          status: HomeDashStatus.initial,
+          status: HomeDashStatusVariables.successTask,
+          errorMessage: 'Task updated successfully',
         ));
       },
     );
   }
 
 // Función privada para validar los datos de la tarea
-  String? _validateTaskData() {
+  bool _validateTaskData() {
     if (state.titleController.text.isEmpty) {
-      return 'Please enter a title';
-    } else if (state.category.isEmpty || state.statusId.isEmpty) {
-      return 'Please select a category';
+      emit(state.copyWith(
+        status: HomeDashStatusVariables.error,
+        errorStatus: 'error',
+        errorMessage: 'Please enter a title',
+      ));
+      /* showErrorsModal(
+        context: context,
+        title: 'Upps something went wrong',
+        errorMessage: 'Please enter a title',
+      ); */
+      return false;
     }
-    return null; // No hay errores
+    if (state.descriptionController.text.isEmpty) {
+      emit(state.copyWith(
+        status: HomeDashStatusVariables.error,
+        errorStatus: 'error',
+        errorMessage: 'Please enter a description',
+      ));
+      /* showErrorsModal(
+        context: context,
+        title: 'Upps something went wrong',
+        errorMessage: 'Please enter a description',
+      ); */
+      return false;
+    }
+    return true;
   }
 
   void setTextTask({
@@ -251,15 +258,25 @@ class HomeDashCubit extends Cubit<HomeDashState> {
         }
 
         emit(state.copyWith(
-          status: HomeDashStatus.error,
+          status: HomeDashStatusVariables.error,
           errorMessage: errorMessage,
         ));
       },
       (response) {
         emit(state.copyWith(
-          status: HomeDashStatus.initial,
+          status: HomeDashStatusVariables.initial,
         ));
       },
     );
+  }
+
+  Future<bool> hasInternetConnection() async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    if (connectivityResult.contains(ConnectivityResult.mobile) ||
+        connectivityResult.contains(ConnectivityResult.wifi)) {
+      return true; // Hay conexión a Internet
+    } else {
+      return false; // No hay conexión a Internet
+    }
   }
 }

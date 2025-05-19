@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dash_todo_app/features/home_view/data/model/categories_model.dart';
-import 'package:dash_todo_app/features/home_view/data/model/task_info_model.dart';
+import 'package:dash_todo_app/features/home_view/data/model/remotes/categories_model.dart';
+import 'package:dash_todo_app/features/home_view/data/model/remotes/task_info_model.dart';
 import 'package:dash_todo_app/injection_container.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -14,7 +14,7 @@ abstract class TaskManagerDataSource {
     required Map<String, dynamic> updateTaskInfo,
   });
 
-  Future<void> deleteTask({required String taskId});
+  Future<bool> deleteTask({required String taskId});
 
   Stream<List<TaskInfoModel>> getTasksList();
   Future<List<CategoryModel>> getCategoriesList();
@@ -43,10 +43,10 @@ class TaskManagerDataSourceImpl extends TaskManagerDataSource {
   }
 
   @override
-  Future<void> deleteTask({required String taskId}) {
+  Future<bool> deleteTask({required String taskId}) async {
     try {
-      final refDb = _db.collection('task').doc(taskId);
-      return refDb.delete();
+      await _db.collection('task').doc(taskId).delete();
+      return true;
     } on FirebaseException catch (e) {
       // Handle error
       throw Exception('Failed to delete task: $e');
@@ -59,11 +59,13 @@ class TaskManagerDataSourceImpl extends TaskManagerDataSource {
   @override
   Stream<List<TaskInfoModel>> getTasksList() {
     try {
-      return FirebaseFirestore.instance.collection('task').snapshots().map(
-            (snapshot) => snapshot.docs.map((doc) {
-              return TaskInfoModel.fromJson(doc.data());
-            }).toList(),
-          );
+      final result = FirebaseFirestore.instance
+          .collection('task')
+          .snapshots()
+          .map((snapshot) => snapshot.docs.map((doc) {
+                return TaskInfoModel.fromJson(doc.data());
+              }).toList());
+      return result;
     } on FirebaseException catch (e) {
       throw Exception(e.toString());
     } catch (e) {

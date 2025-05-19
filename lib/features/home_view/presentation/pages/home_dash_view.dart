@@ -3,7 +3,7 @@
 import 'package:dash_todo_app/core/base/base_page.dart';
 import 'package:dash_todo_app/core/styles/app_them.dart';
 import 'package:dash_todo_app/core/utils/modals/error_page.dart';
-import 'package:dash_todo_app/features/home_view/data/model/task_info_model.dart';
+import 'package:dash_todo_app/features/home_view/data/model/remotes/task_info_model.dart';
 import 'package:dash_todo_app/features/home_view/presentation/pages/widgets/modal_bottom_sheet.dart';
 import 'package:dash_todo_app/features/home_view/presentation/bloc/home_dash_bloc.dart';
 import 'package:dash_todo_app/injection_container.dart';
@@ -19,37 +19,58 @@ class HomeDashView extends BasePage<HomeDashState, HomeDashCubit> {
   const HomeDashView({super.key});
 
   @override
-  HomeDashCubit createBloc(BuildContext context) => sl<HomeDashCubit>()..init();
+  HomeDashCubit createBloc(BuildContext context) =>
+      sl<HomeDashCubit>()..init(context);
 
   @override
   Widget buildPage(
-      BuildContext context, HomeDashState state, HomeDashCubit bloc) {
+    BuildContext context,
+    HomeDashState state,
+    HomeDashCubit bloc,
+  ) {
     return Scaffold(
       body: SafeArea(
-        child: BlocListener<HomeDashCubit, HomeDashState>(
-            listener: (context, state) {
-              if (state.status == HomeDashStatus.error) {
-                showErrorsModal(
-                  context: context,
-                  title: 'Upps something went wrong',
-                  errorMessage: state.errorMessage,
-                );
-              }
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            HeaderWidget(
+              state: state,
+            ),
+            DashBoardWidget(),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          modalBottomSheetCard(
+            context: context,
+            title: "Add Task",
+            cubit: bloc,
+            state: state,
+            category: 'New Task',
+            onSelected: () {
+              bloc.createTask();
+              context.pop();
             },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                HeaderWidget(),
-                DashBoardWidget(),
-              ],
-            )),
+          );
+        },
+        backgroundColor: AppColors.primary,
+        child: Icon(
+          Icons.add,
+          color: AppColors.white,
+          size: 30,
+        ),
       ),
     );
   }
 }
 
 class HeaderWidget extends StatelessWidget {
-  const HeaderWidget({super.key});
+  const HeaderWidget({
+    super.key,
+    required this.state,
+  });
+  final HomeDashState state;
 
   @override
   Widget build(BuildContext context) {
@@ -92,15 +113,51 @@ class HeaderWidget extends StatelessWidget {
           ),
           SizedBox(height: MediaQuery.of(context).size.height * 0.04),
           Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: Text(
-              "What's up, Joy!",
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+              padding: const EdgeInsets.only(left: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "What's up,",
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // Booton Refresh Data
+                  GestureDetector(
+                    onTap: () {
+                      context.read<HomeDashCubit>().init(context);
+                    },
+                    child: state.status != HomeDashStatusVariables.syncOffline
+                        ? Text(
+                            'Syncing...',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppColors.primary,
+                            ),
+                          )
+                        : Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            child: Text(
+                              'Refresh Offline',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppColors.white,
+                              ),
+                            ),
+                          ),
+                  ),
+                ],
+              )),
         ],
       ),
     );
@@ -120,117 +177,114 @@ class _DashBoardWidgetState extends State<DashBoardWidget> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<HomeDashCubit>().state;
-    return Expanded(
-      child: BoardView(
-        boardViewController: boardViewController,
-        width: 350,
-        lists: state.categories.map((columnName) {
-          return BoardList(
-            draggable: true,
-            headerBackgroundColor: AppColors.primary,
-            backgroundColor: AppColors.grey200,
-            boardView: BoardViewState(),
-
-            /* onDropItem: (item, fromList, toList, fromIndex, toIndex) {
-                  print({
-                    'taskId': taskInfo.taskId,
-                    'fromList': fromList,
-                    'toList': toList,
-                    'fromIndex': fromIndex,
-                    'toIndex': toIndex,
-                  });
-                  /* bloc.updateTaskId(
-                    taskId: taskInfo.taskId!,
-                    categoryName: state.categories[fromIndex!].statuName!,
-                    categoryId: state.categories[fromIndex].statusId!,
-                  ); */
-                }, */
-            footer: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GestureDetector(
-                onTap: () {
-                  modalBottomSheetCard(
-                    context: context,
-                    title: "Add Task",
-                    cubit: bloc,
-                    state: state,
-                    category: columnName.statuName,
-                    onSelected: () {
-                      bloc.createTask();
-                    },
-                  );
-                },
-                child: Container(
-                  width: double.infinity,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: AppColors.primary,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.add,
-                        color: AppColors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Add Task',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: AppColors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+    return state.tasks.isEmpty
+        ? const Center(
+            child: Text(
+              'No tasks available',
+              style: TextStyle(
+                fontSize: 20,
+                color: AppColors.primary,
               ),
             ),
-            header: [
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.all(10),
-                  child: Text(
-                    columnName.statuName!,
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: AppColors.white,
-                      fontWeight: FontWeight.bold,
+          )
+        : Expanded(
+            child: BoardView(
+              boardViewController: boardViewController,
+              width: 350,
+              lists: state.categories.map((columnName) {
+                return BoardList(
+                  draggable: true,
+                  headerBackgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.grey200,
+                  boardView: BoardViewState(),
+                  footer: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        modalBottomSheetCard(
+                          context: context,
+                          title: "Add Task",
+                          cubit: bloc,
+                          state: state,
+                          category: columnName.statuName,
+                          onSelected: () {
+                            bloc.createTask();
+                          },
+                        );
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: AppColors.primary,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add,
+                              color: AppColors.white,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Add Task',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppColors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
-            items: state.tasks
-                .where((task) => task.categoryName == columnName.statuName)
-                .map((taskInfo) {
-              return BoardItem(
-                // Controlador para el movimiento de los elementos
-                onDragItem: (item, fromList, toList, fromIndex, toIndex) {},
-                // Actualiza el estado de la tarea al soltarla
-                onDropItem: (listIndex, itemIndex, oldListIndex, oldItemIndex,
-                    boardItemState) {
-                  bloc.updateTaskId(
-                    taskId: taskInfo.taskId!,
-                    categoryName: state.categories[listIndex!].statuName!,
-                    categoryId: state.categories[listIndex].statusId!,
-                  );
-                },
+                  header: [
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.all(10),
+                        child: Text(
+                          columnName.statuName!,
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: AppColors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  items: state.tasks
+                      .where(
+                          (task) => task.categoryName == columnName.statuName)
+                      .map((taskInfo) {
+                    return BoardItem(
+                      // Controlador para el movimiento de los elementos
+                      onDragItem:
+                          (item, fromList, toList, fromIndex, toIndex) {},
+                      // Actualiza el estado de la tarea al soltarla
+                      onDropItem: (listIndex, itemIndex, oldListIndex,
+                          oldItemIndex, boardItemState) {
+                        bloc.updateTaskId(
+                          taskId: taskInfo.taskId!,
+                          categoryName: state.categories[listIndex!].statuName!,
+                          categoryId: state.categories[listIndex].statusId!,
+                        );
+                      },
 
-                item: taskWidget(
-                  state,
-                  bloc,
-                  taskInfo,
-                  context,
-                ),
-              );
-            }).toList(),
+                      item: taskWidget(
+                        state,
+                        bloc,
+                        taskInfo,
+                        context,
+                      ),
+                    );
+                  }).toList(),
+                );
+              }).toList(),
+            ),
           );
-        }).toList(),
-      ),
-    );
   }
 
   Widget taskWidget(

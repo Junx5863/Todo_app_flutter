@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dash_todo_app/features/home_view/data/datasource/task_manager_data_source.dart';
+import 'package:dash_todo_app/features/home_view/data/datasource/local/task_local_data_source.dart';
+import 'package:dash_todo_app/features/home_view/data/datasource/remotes/task_manager_data_source.dart';
+import 'package:dash_todo_app/features/home_view/data/model/local/task_local_model.dart';
 import 'package:dash_todo_app/features/home_view/data/repositories/task_manager_repository_impl.dart';
 import 'package:dash_todo_app/features/home_view/domain/repositories/task_manager_repository.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/add_task_use_case.dart';
@@ -16,6 +18,7 @@ import 'package:dash_todo_app/features/login_view/domain/usecases/sign_in_email_
 import 'package:dash_todo_app/features/login_view/presentation/bloc/social_auth_bloc.dart';
 import 'package:dash_todo_app/features/splash_view/bloc/splash_bloc.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
@@ -23,7 +26,9 @@ import 'package:get_it/get_it.dart';
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  final taskBox = await Hive.openBox<TaskLocalModel>('tasks');
   sl
+    ..registerLazySingleton<Box<TaskLocalModel>>(() => taskBox)
     ..registerLazySingleton<FirebaseAuth>(
       () => FirebaseAuth.instance,
     )
@@ -72,12 +77,18 @@ Future<void> init() async {
     /*----------------*/
 
     /*-- Home Dash Screen --*/
+
+    ..registerFactory<TaskLocalDataSource>(
+      () => TaskLocalDataSourceImpl(),
+    )
     ..registerFactory<TaskManagerDataSource>(
       () => TaskManagerDataSourceImpl(),
     )
     ..registerFactory<TaskManagerRepository>(
       () => TaskManagerRepositoryImpl(
         taskManagerDataSource: sl(),
+        taskLocalDataSource: sl(),
+        sharedPreferences: sl(),
       ),
     )
     ..registerFactory<CreateTaskUseCase>(

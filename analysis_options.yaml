@@ -1,1 +1,5 @@
 include: package:flutter_lints/flutter.yaml
+analyzer:
+  errors:
+    void_checks: ignore
+    constant_pattern_never_matches_value_type: ignore
