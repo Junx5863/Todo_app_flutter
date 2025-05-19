@@ -37,6 +37,15 @@ class LoginPage extends BasePage<SocialAuthState, SocialAuthBloc> {
         if (state.status == SocialAuthStatus.success) {
           context.go(RoutePathsName.home);
         }
+
+        if (state.status == SocialAuthStatus.successRegister) {
+          showErrorsModal(
+            context: context,
+            title: 'Success',
+            errorMessage: 'Register successful, please login',
+            isError: false,
+          );
+        }
       },
       child: KeyboardDismissOnTap(
         child: Scaffold(

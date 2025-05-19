@@ -18,6 +18,8 @@ abstract class TaskManagerDataSource {
 
   Stream<List<TaskInfoModel>> getTasksList();
   Future<List<CategoryModel>> getCategoriesList();
+
+  Future<bool> signOut();
 }
 
 class TaskManagerDataSourceImpl extends TaskManagerDataSource {
@@ -108,5 +110,11 @@ class TaskManagerDataSourceImpl extends TaskManagerDataSource {
       // Handle error
       throw Exception('Failed to get categories: $e');
     }
+  }
+
+  @override
+  Future<bool> signOut() async {
+    await _auth.signOut();
+    return _auth.currentUser == null;
   }
 }

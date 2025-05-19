@@ -1,11 +1,6 @@
 part of 'social_auth_bloc.dart';
 
-enum SocialAuthStatus {
-  initial,
-  loading,
-  success,
-  error,
-}
+enum SocialAuthStatus { initial, loading, success, error, successRegister }
 
 class SocialAuthState {
   SocialAuthState({

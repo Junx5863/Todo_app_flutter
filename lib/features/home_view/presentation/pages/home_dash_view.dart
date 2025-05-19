@@ -2,7 +2,6 @@
 
 import 'package:dash_todo_app/core/base/base_page.dart';
 import 'package:dash_todo_app/core/styles/app_them.dart';
-import 'package:dash_todo_app/core/utils/modals/error_page.dart';
 import 'package:dash_todo_app/features/home_view/data/model/remotes/task_info_model.dart';
 import 'package:dash_todo_app/features/home_view/presentation/pages/widgets/modal_bottom_sheet.dart';
 import 'package:dash_todo_app/features/home_view/presentation/bloc/home_dash_bloc.dart';
@@ -49,7 +48,9 @@ class HomeDashView extends BasePage<HomeDashState, HomeDashCubit> {
             state: state,
             category: 'New Task',
             onSelected: () {
-              bloc.createTask();
+              bloc.createTask(
+                context,
+              );
               context.pop();
             },
           );
@@ -66,11 +67,12 @@ class HomeDashView extends BasePage<HomeDashState, HomeDashCubit> {
 }
 
 class HeaderWidget extends StatelessWidget {
-  const HeaderWidget({
+  HeaderWidget({
     super.key,
     required this.state,
   });
   final HomeDashState state;
+  final bloc = sl<HomeDashCubit>();
 
   @override
   Widget build(BuildContext context) {
@@ -102,11 +104,18 @@ class HeaderWidget extends StatelessWidget {
                     size: 26,
                   ),
                   const SizedBox(width: 16),
-                  Icon(
-                    Icons.notifications,
-                    color: AppColors.primary,
-                    size: 26,
-                  ),
+                  IconButton(
+                    onPressed: () {
+                      bloc.signOut(
+                        context,
+                      );
+                    },
+                    icon: Icon(
+                      Icons.logout_sharp,
+                      color: AppColors.primary,
+                      size: 26,
+                    ),
+                  )
                 ],
               ),
             ],
@@ -208,7 +217,7 @@ class _DashBoardWidgetState extends State<DashBoardWidget> {
                           state: state,
                           category: columnName.statuName,
                           onSelected: () {
-                            bloc.createTask();
+                            bloc.createTask(context);
                           },
                         );
                       },
@@ -267,6 +276,7 @@ class _DashBoardWidgetState extends State<DashBoardWidget> {
                       onDropItem: (listIndex, itemIndex, oldListIndex,
                           oldItemIndex, boardItemState) {
                         bloc.updateTaskId(
+                          context: context,
                           taskId: taskInfo.taskId!,
                           categoryName: state.categories[listIndex!].statuName!,
                           categoryId: state.categories[listIndex].statusId!,
@@ -307,6 +317,7 @@ class _DashBoardWidgetState extends State<DashBoardWidget> {
           category: taskInfo.categoryName,
           onSelected: () {
             bloc.updateTaskInfo(
+              context: context,
               taskId: taskInfo.taskId!,
             );
             context.pop();
@@ -372,7 +383,8 @@ class _DashBoardWidgetState extends State<DashBoardWidget> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      bloc.deleteTask(taskId: taskInfo.taskId!);
+                      bloc.deleteTask(
+                          context: context, taskId: taskInfo.taskId!);
                     },
                     child: Container(
                       margin: EdgeInsets.only(left: 10),

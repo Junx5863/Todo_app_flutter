@@ -23,4 +23,6 @@ abstract class TaskManagerRepository {
     required bool hasConnection,
   });
   Future<Either<Failure, List<CategoryModel>>> getCategories();
+
+  Future<Either<Failure, bool>> signOut();
 }

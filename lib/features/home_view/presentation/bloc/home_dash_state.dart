@@ -15,7 +15,6 @@ class HomeDashState {
     required this.dueTo,
     required this.tasks,
     required this.status,
-    required this.dateTime,
     required this.category,
     required this.statusId,
     required this.statusTask,
@@ -39,11 +38,10 @@ class HomeDashState {
         status: HomeDashStatusVariables.initial,
         titleController: TextEditingController(),
         descriptionController: TextEditingController(),
-        dateTime: DateFormat('yyyy-MM-dd').format(DateTime.now()),
       );
   final bool isDone;
   final String dueTo;
-  final String dateTime;
+
   final String category;
   final String statusId;
   final String statusTask;
@@ -58,7 +56,6 @@ class HomeDashState {
   HomeDashState copyWith({
     bool? isDone,
     String? dueTo,
-    String? dateTime,
     String? category,
     String? statusId,
     String? statusTask,
@@ -76,7 +73,6 @@ class HomeDashState {
       isDone: isDone ?? this.isDone,
       status: status ?? this.status,
       category: category ?? this.category,
-      dateTime: dateTime ?? this.dateTime,
       statusId: statusId ?? this.statusId,
       statusTask: statusTask ?? this.statusTask,
       categories: categories ?? this.categories,

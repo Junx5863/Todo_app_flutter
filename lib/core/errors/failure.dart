@@ -79,3 +79,9 @@ class DeleteAllTasksFailure extends Failure {
 
   final String message;
 }
+
+class SignOutFailure extends Failure {
+  SignOutFailure({required this.message});
+
+  final String message;
+}

@@ -8,6 +8,7 @@ import 'package:dash_todo_app/features/home_view/domain/usecases/add_task_use_ca
 import 'package:dash_todo_app/features/home_view/domain/usecases/delete_task_use_case.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/get_categories_use_case.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/get_task_use_case.dart';
+import 'package:dash_todo_app/features/home_view/domain/usecases/logout_use_case.dart';
 import 'package:dash_todo_app/features/home_view/domain/usecases/update_task_use_case.dart';
 import 'package:dash_todo_app/features/home_view/presentation/bloc/home_dash_bloc.dart';
 import 'package:dash_todo_app/features/login_view/data/datasource/social_auth_data_source.dart';
@@ -116,6 +117,11 @@ Future<void> init() async {
         taskManagerRepository: sl(),
       ),
     )
+    ..registerFactory<SignOutUseCase>(
+      () => SignOutUseCase(
+        taskManagerRepository: sl(),
+      ),
+    )
     ..registerFactory<HomeDashCubit>(
       () => HomeDashCubit(
         deleteTaskUseCase: sl(),
@@ -123,6 +129,8 @@ Future<void> init() async {
         updateTaskUseCase: sl(),
         addTaskUseCase: sl(),
         getCategoriesUseCase: sl(),
+        signOutUseCase: sl(),
+        sharedPreferences: sl(),
       ),
     );
 

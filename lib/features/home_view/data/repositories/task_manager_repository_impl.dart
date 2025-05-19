@@ -239,4 +239,18 @@ class TaskManagerRepositoryImpl extends TaskManagerRepository {
       }
     }
   }
+
+  @override
+  Future<Either<Failure, bool>> signOut() async {
+    try {
+      final result = await taskManagerDataSource.signOut();
+      return Right(result);
+    } catch (e) {
+      return Left(
+        SignOutFailure(
+          message: e.toString(),
+        ),
+      );
+    }
+  }
 }
